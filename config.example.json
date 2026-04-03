@@ -1,0 +1,4 @@
+{
+  "project_id": "YOUR-GCP-PROJECT-ID",
+  "credentials": "vertex.json"
+}

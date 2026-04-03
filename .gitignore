@@ -1,0 +1,19 @@
+# IDE
+.vscode/
+.idea/
+
+# Backend
+__pycache__/
+*.pyc
+venv/
+env/
+.env
+
+# Cloud Credentials (NEVER UPLOAD!)
+vertex.json
+config.json
+
+# App Data
+uploads/
+outputs/
+*.operation.json

@@ -751,6 +751,7 @@
                     <div class="tab" onclick="switchTab('long',this)" data-i18n="tabLong">Long Video</div>
                     <div class="tab" onclick="switchTab('extend',this)" data-i18n="tabExtend">Extend Video</div>
                     <div class="tab" onclick="switchTab('image',this)" data-i18n="tabImage">Image</div>
+                    <div class="tab" onclick="switchTab('narration',this)">🎙️ Narration</div>
                 </div>
 
                 <!-- Short Video -->
@@ -925,6 +926,81 @@
                                 <option value="imagen-3.0-fast-generate-001">Imagen 3.0 Fast</option>
                             </select>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Narration -->
+                <div id="narration-tab" class="tab-content">
+                    <div class="group">
+                        <label>Mode</label>
+                        <div class="pills">
+                            <div class="pill active" onclick="setNarrMode('auto')">Auto</div>
+                            <div class="pill" onclick="setNarrMode('manual')">Manual</div>
+                        </div>
+                    </div>
+                    <div id="narr-auto">
+                        <div class="group">
+                            <label>Topic / Theme</label>
+                            <input type="text" id="narr-topic" placeholder="e.g. 春天的樱花...">
+                        </div>
+                        <div class="row">
+                            <div class="group">
+                                <label>Images</label>
+                                <select id="narr-img-count">
+                                    <option>2</option><option selected>3</option><option>4</option><option>5</option><option>6</option>
+                                </select>
+                            </div>
+                            <div class="group">
+                                <label>Duration</label>
+                                <div class="row">
+                                    <input type="number" id="narr-dur" value="30" min="5" max="600" style="flex:1">
+                                    <select id="narr-dur-unit" onchange="onNarrDurUnitChange()" style="width:70px">
+                                        <option value="s">sec</option>
+                                        <option value="m">min</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="group">
+                                <label>TTS Engine</label>
+                                <select id="narr-engine" onchange="onNarrEngineChange()">
+                                    <option value="mimo">MiMo (Free)</option>
+                                    <option value="gemini">Gemini (Emotional)</option>
+                                </select>
+                            </div>
+                            <div class="group">
+                                <label>Voice</label>
+                                <select id="narr-voice">
+                                    <option value="mimo_default">MiMo Default</option>
+                                    <option value="default_zh">Chinese Female</option>
+                                    <option value="default_en">English Female</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button class="gen-btn" onclick="autoNarrate()">🚀 One-Click Generate</button>
+                    </div>
+                    <div id="narr-manual" style="display:none">
+                        <div class="group">
+                            <label>Upload Images</label>
+                            <input type="file" id="narr-imgs" multiple accept="image/*" onchange="onNarrImgs(event)">
+                            <div id="narr-img-list" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"></div>
+                        </div>
+                        <div class="group">
+                            <label>Narration Text</label>
+                            <textarea id="narr-text" placeholder="Enter your narration..."></textarea>
+                            <div class="hint" id="narr-hint">0 chars</div>
+                        </div>
+                        <button class="gen-btn" onclick="manualNarrate()">Generate Video</button>
+                    </div>
+                    <div class="progress" id="narr-progress">
+                        <div class="progress-text" id="narr-prog-text">...</div>
+                        <div class="bar"><div class="bar-fill" id="narr-prog-bar"></div></div>
+                    </div>
+                    <div class="result" id="narr-result">
+                        <h3>Video Generated!</h3>
+                        <video id="narr-video" controls></video>
+                        <a href="#" class="dl-btn" id="narr-dl" download>Download</a>
                     </div>
                 </div>
 
@@ -1474,6 +1550,164 @@
                     else { img.style.display = 'none'; vid.style.display = 'block'; vid.src = d.output_url; dl.href = d.output_url; dl.textContent = lang === 'zh' ? '下载视频' : 'Download Video'; }
                 } else if (d.status === 'error') { clearInterval(pollTimer); isSubmitting = false; const btn = document.getElementById('gen-btn'); btn.disabled = false; btn.textContent = mode === 'image' ? (lang === 'zh' ? '生成图像' : 'Generate Image') : mode === 'extend' ? (lang === 'zh' ? '延长视频' : 'Extend Video') : (lang === 'zh' ? '生成' : 'Generate'); document.getElementById('progress').classList.remove('show'); alert('Failed: ' + d.message); }
             } catch (e) { console.error(e); }
+        }
+
+        // ========== Narration ==========
+        let narrMode = 'auto', narrImages = [];
+
+        function setNarrMode(m) {
+            narrMode = m;
+            document.querySelectorAll('#narration-tab .pill').forEach(p => p.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('narr-auto').style.display = m === 'auto' ? 'block' : 'none';
+            document.getElementById('narr-manual').style.display = m === 'manual' ? 'block' : 'none';
+        }
+
+        function onNarrEngineChange() {
+            const engine = document.getElementById('narr-engine').value;
+            const sel = document.getElementById('narr-voice');
+            sel.innerHTML = engine === 'gemini' 
+                ? '<option>Kore</option><option>Puck</option><option>Charon</option><option>Fenrir</option><option>Leda</option>'
+                : '<option value="mimo_default">MiMo Default</option><option value="default_zh">Chinese Female</option><option value="default_en">English Female</option>';
+        }
+
+        function onNarrDurUnitChange() {
+            const unit = document.getElementById('narr-dur-unit').value;
+            const input = document.getElementById('narr-dur');
+            if (unit === 'm') {
+                input.value = Math.round((parseInt(input.value) || 30) / 60) || 1;
+                input.min = 1; input.max = 10;
+            } else {
+                input.value = (parseInt(input.value) || 1) * 60;
+                input.min = 5; input.max = 600;
+            }
+        }
+
+        function getNarrDurSec() {
+            const val = parseInt(document.getElementById('narr-dur').value) || 30;
+            return document.getElementById('narr-dur-unit').value === 'm' ? val * 60 : val;
+        }
+
+        async function autoNarrate() {
+            const topic = document.getElementById('narr-topic').value.trim();
+            if (!topic) return alert('Please enter a topic');
+
+            document.getElementById('narr-progress').classList.add('show');
+            document.getElementById('narr-result').classList.remove('show');
+
+            const durSec = getNarrDurSec();
+            const imgCount = parseInt(document.getElementById('narr-img-count').value);
+            const engine = document.getElementById('narr-engine').value;
+            const voice = document.getElementById('narr-voice').value;
+
+            try {
+                document.getElementById('narr-prog-text').textContent = 'Step 1/3: AI generating text...';
+                document.getElementById('narr-prog-bar').style.width = '10%';
+
+                const textRes = await fetch(`${API}/api/narration/auto`, {
+                    method: 'POST', headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({topic, image_count: imgCount, duration: durSec})
+                });
+                const textData = await textRes.json();
+                if (textData.error) throw new Error(textData.error);
+
+                document.getElementById('narr-prog-bar').style.width = '30%';
+
+                const prompts = textData.image_prompts || [];
+                const generatedImages = [];
+                for (let i = 0; i < prompts.length; i++) {
+                    document.getElementById('narr-prog-text').textContent = `Step 2/3: Generating image ${i+1}/${prompts.length}...`;
+                    document.getElementById('narr-prog-bar').style.width = (30 + (i+1)/prompts.length*30) + '%';
+                    const imgRes = await fetch(`${API}/api/narration/ai-image`, {
+                        method: 'POST', headers: {'Content-Type':'application/json'},
+                        body: JSON.stringify({prompt: prompts[i]})
+                    });
+                    const imgData = await imgRes.json();
+                    if (!imgData.error) generatedImages.push(imgData.filename);
+                }
+                if (generatedImages.length === 0) throw new Error('Failed to generate images');
+
+                document.getElementById('narr-prog-text').textContent = 'Step 3/3: Generating audio & video...';
+                document.getElementById('narr-prog-bar').style.width = '70%';
+
+                const narRes = await fetch(`${API}/api/narration`, {
+                    method: 'POST', headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({text: textData.text, images: generatedImages, voice, engine})
+                });
+                const narData = await narRes.json();
+                if (narData.error) throw new Error(narData.error);
+
+                document.getElementById('narr-prog-bar').style.width = '100%';
+                document.getElementById('narr-progress').classList.remove('show');
+                document.getElementById('narr-result').classList.add('show');
+                document.getElementById('narr-video').src = narData.video_url;
+                document.getElementById('narr-dl').href = narData.video_url;
+            } catch (e) {
+                alert('Error: ' + e.message);
+                document.getElementById('narr-progress').classList.remove('show');
+            }
+        }
+
+        function onNarrImgs(e) {
+            const files = Array.from(e.target.files);
+            const list = document.getElementById('narr-img-list');
+            list.innerHTML = '';
+            narrImages = files;
+            files.forEach(f => {
+                const reader = new FileReader();
+                reader.onload = ev => {
+                    const div = document.createElement('div');
+                    div.style.cssText = 'width:60px;height:60px;border-radius:6px;overflow:hidden;border:1px solid var(--border)';
+                    div.innerHTML = `<img src="${ev.target.result}" style="width:100%;height:100%;object-fit:cover">`;
+                    list.appendChild(div);
+                };
+                reader.readAsDataURL(f);
+            });
+        }
+
+        document.getElementById('narr-text')?.addEventListener('input', function() {
+            document.getElementById('narr-hint').textContent = this.value.length + ' chars · ~' + Math.max(5, Math.ceil(this.value.length/4.5)) + 's';
+        });
+
+        async function manualNarrate() {
+            const text = document.getElementById('narr-text').value.trim();
+            if (!text) return alert('Please enter text');
+            if (narrImages.length === 0) return alert('Please upload images');
+
+            document.getElementById('narr-progress').classList.add('show');
+            try {
+                document.getElementById('narr-prog-text').textContent = 'Uploading images...';
+                document.getElementById('narr-prog-bar').style.width = '20%';
+
+                const uploaded = [];
+                for (let i = 0; i < narrImages.length; i++) {
+                    const fd = new FormData();
+                    fd.append('image', narrImages[i]);
+                    const res = await fetch(`${API}/api/upload`, {method: 'POST', body: fd});
+                    const data = await res.json();
+                    if (data.error) throw new Error(data.error);
+                    uploaded.push(data.filename);
+                }
+
+                document.getElementById('narr-prog-text').textContent = 'Generating video...';
+                document.getElementById('narr-prog-bar').style.width = '60%';
+
+                const narRes = await fetch(`${API}/api/narration`, {
+                    method: 'POST', headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({text, images: uploaded, voice: 'mimo_default', engine: 'mimo'})
+                });
+                const narData = await narRes.json();
+                if (narData.error) throw new Error(narData.error);
+
+                document.getElementById('narr-prog-bar').style.width = '100%';
+                document.getElementById('narr-progress').classList.remove('show');
+                document.getElementById('narr-result').classList.add('show');
+                document.getElementById('narr-video').src = narData.video_url;
+                document.getElementById('narr-dl').href = narData.video_url;
+            } catch (e) {
+                alert('Error: ' + e.message);
+                document.getElementById('narr-progress').classList.remove('show');
+            }
         }
     </script>
 </body>

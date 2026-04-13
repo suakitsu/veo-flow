@@ -18,12 +18,13 @@ app = Flask(__name__)
 CORS(app)
 
 # 注册路由蓝图
-from routes import generate, gemini, tasks, proxy
+from routes import generate, gemini, tasks, proxy, narration
 
 app.register_blueprint(generate.bp)
 app.register_blueprint(gemini.bp)
 app.register_blueprint(tasks.bp)
 app.register_blueprint(proxy.bp)
+app.register_blueprint(narration.bp)
 
 
 @app.route('/')

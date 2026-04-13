@@ -23,10 +23,13 @@
 ## 核心功能
 
 - **短视频** — 4/6/8秒，选模型和比例
-- **长视频** — 自动分段，帧级衔接
-- **延长视频** — 上传视频/尾帧，AI续画
-- **图像生成** — Imagen 3 高质量图片
-- **AI助手** — 分析参考图、优化提示词、对话
+- **长视频** — 自动分段，各段最后一帧与下一段首帧级衔接，保持一致性
+- **延长视频** — 上传视频/尾帧，AI原位续画
+- **文配视频 (🎙️ NEW)** — 自动模式（输入主题出成片） or 手动模式（自选素材+配音）
+- **分镜编辑器 (🎬 NEW)** — 批量生成多个镜头，FFmpeg 自动合成
+- **数据大屏 (📊 NEW)** — 实时费用统计、成功率监控、完整历史记录
+- **AI助手** — 分析参考图、优化提示词、对话建议
+- **提示词模板** — 内置 19+ 套涵盖广告、动漫、风景、恐怖等专业模板
 
 ## 费用
 
@@ -58,9 +61,10 @@
 pip install -r requirements.txt
 
 # 2. 配置凭证
-#    将 config.example.json 复制/重命名为 config.json 并填入项目ID。
-#    将 GCP 服务账号真实密钥文件放入根目录，命名为 vertex.json。
-#    (你可以参考 vertex.example.json 查看密钥格式)
+#    方式 A：API Key 模式 (推荐，适用于“小米米莫”等中转平台)
+#       编辑 config.json：填入 "api_key"、"api_base_url" 和 "project_id" 即可。
+#    方式 B：Vertex AI 模式 (官方标准)
+#       将 GCP 服务账号密钥保存为 vertex.json 放入根目录，并在 config.json 中填入 "project_id"。
 
 ```bash
 # 3. 启动
@@ -80,16 +84,19 @@ googleVideo/
 │
 ├── generators/            # 核心生成逻辑
 │   ├── veo.py            # Veo视频生成
-│   └── imagen.py         # Imagen图像生成
+│   ├── imagen.py         # Imagen图像生成
+│   └── client.py         # 统一 GenAI 客户端管理
 │
-├── routes/                # Flask路由
-│   ├── generate.py       # /api/generate, /api/extend
+├── routes/                # Flask蓝图
+│   ├── generate.py       # 短/长/图/批量分镜接口
+│   ├── narration.py      # 配音与自动出片工作流
 │   ├── gemini.py         # AI助手接口
 │   ├── tasks.py          # 任务状态和下载
-│   └── proxy.py          # 代理配置
+│   └── proxy.py          # 代理控制
 │
-├── services/              # 业务逻辑
-│   └── task_manager.py   # 任务状态、用户锁
+├── services/              # 服务层
+│   ├── task_manager.py   # 任务状态、用户锁锁
+│   └── history_manager.py# 线程安全记录与统计服务
 │
 ├── templates/
 │   └── index.html        # 网页界面
@@ -102,14 +109,13 @@ googleVideo/
 
 | 方法 | 接口 | 说明 |
 |------|------|------|
-| `GET` | `/api/models` | 模型列表 |
-| `POST` | `/api/generate` | 生成视频/图像 |
-| `POST` | `/api/extend` | 延长现有视频 |
-| `GET` | `/api/task/<id>` | 查询任务状态 |
-| `GET` | `/api/download/<id>` | 下载结果 |
-| `POST` | `/api/analyze-image` | 用Gemini分析图片 |
-| `POST` | `/api/chat` | 与AI助手对话 |
-| `POST` | `/api/refine-prompt` | 优化提示词 |
+| `POST` | `/api/generate` | 普通生成 |
+| `POST` | `/api/batch` | 批量分镜生成 |
+| `POST` | `/api/narration` | 配音视频合成接口 |
+| `GET`  | `/api/history` | 查询费用与审计历史 |
+| `GET`  | `/api/templates` | 提示词模板列表 |
+| `GET`  | `/api/task/<id>` | 任务状态查询 |
+| `POST` | `/api/analyze-image`| Gemini 图片分析 |
 
 ## 代理配置
 

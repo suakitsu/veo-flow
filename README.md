@@ -22,11 +22,14 @@
 
 ## ✨ Features
 
-- **Short Video** — 4/6/8 seconds, choose model and aspect ratio
-- **Long Video** — Auto-segmentation with frame-level continuity
-- **Extend Video** — Upload video/last frame, AI continues naturally
-- **Image Generation** — Imagen 3 for high-quality stills
-- **AI Assistant** — Image analysis, prompt refinement, creative chat
+- **Short Video** — 4/6/8 seconds choosing models and aspect ratios.
+- **Long Video** — Auto-segmentation with frame-level continuity using frame-to-frame technology.
+- **Extend Video** — Upload any video/last frame, the AI continues the scene naturally.
+- **Narration (🎙️ NEW)** — Auto-mode (Topic to full video) or Manual-mode (Your photos + scripts).
+- **Storyboard (🎬 NEW)** — Multi-shot batch generation with auto-concatenation (FFmpeg).
+- **Dashboard (📊 NEW)** — Track cost, success rates, and full generation history.
+- **AI Assistant** — Image analysis, prompt refinement, creative chat with Gemini.
+- **Prompt Templates** — 19+ Pro templates for products, anime, landscapes, etc.
 
 ## 💰 Pricing
 
@@ -58,9 +61,10 @@ Cost estimate shown before every generation. Confirm to proceed.
 pip install -r requirements.txt
 
 # 2. Configure credentials
-#    Rename config.example.json to config.json and fill in your GCP project ID.
-#    Place your authentic GCP service account key as vertex.json.
-#    (You can refer to vertex.example.json for the required format)
+#    A. API Key Mode (Recommended for xiaomimimo/Third-party):
+#       Edit config.json: set "api_key", "api_base_url", and "project_id".
+#    B. Vertex AI Mode (Standard):
+#       Place your GCP service account key as vertex.json and set "project_id" in config.json.
 
 ```bash
 # 3. Launch
@@ -80,16 +84,19 @@ googleVideo/
 │
 ├── generators/            # Core generation logic
 │   ├── veo.py            # Veo video generator
-│   └── imagen.py         # Imagen image generator
+│   ├── imagen.py         # Imagen image generator
+│   └── client.py         # Unified GenAI client
 │
 ├── routes/                # Flask Blueprints
-│   ├── generate.py       # /api/generate, /api/extend
+│   ├── generate.py       # Short/Long/Image/Batch APIs
+│   ├── narration.py      # TTS & Narration workflow
 │   ├── gemini.py         # AI assistant endpoints
 │   ├── tasks.py          # Task status & download
 │   └── proxy.py          # Proxy configuration
 │
 ├── services/              # Business logic
-│   └── task_manager.py   # Task state, user locks
+│   ├── task_manager.py   # Task state, user locks
+│   └── history_manager.py# Thread-safe history & stats
 │
 ├── templates/
 │   └── index.html        # Web UI
@@ -102,14 +109,13 @@ googleVideo/
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `GET` | `/api/models` | List Veo models |
 | `POST` | `/api/generate` | Generate video/image |
-| `POST` | `/api/extend` | Extend existing video |
-| `GET` | `/api/task/<id>` | Get task status |
-| `GET` | `/api/download/<id>` | Download result |
-| `POST` | `/api/analyze-image` | Analyze image with Gemini |
-| `POST` | `/api/chat` | Chat with AI assistant |
-| `POST` | `/api/refine-prompt` | Refine prompt with Gemini |
+| `POST` | `/api/batch` | Batch generation (Storyboard) |
+| `POST` | `/api/narration` | TTS Video synthesis |
+| `GET`  | `/api/history` | Get generation logs |
+| `GET`  | `/api/templates` | List prompt templates |
+| `GET`  | `/api/task/<id>` | Get task status |
+| `POST` | `/api/analyze-image`| Analyze image with Gemini |
 
 ## ⚙️ Proxy Configuration
 

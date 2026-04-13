@@ -821,10 +821,10 @@
                     <div class="tab" onclick="switchTab('long',this)" data-i18n="tabLong">Long Video</div>
                     <div class="tab" onclick="switchTab('extend',this)" data-i18n="tabExtend">Extend Video</div>
                     <div class="tab" onclick="switchTab('image',this)" data-i18n="tabImage">Image</div>
-                    <div class="tab" onclick="switchTab('templates',this)">Templates</div>
-                    <div class="tab" onclick="switchTab('storyboard',this)">Storyboard</div>
-                    <div class="tab" onclick="switchTab('dashboard',this)">Dashboard</div>
-                    <div class="tab" onclick="switchTab('narration',this)">🎙️ Narration</div>
+                    <div class="tab" onclick="switchTab('templates',this)" data-i18n="templates">Templates</div>
+                    <div class="tab" onclick="switchTab('storyboard',this)" data-i18n="storyboard">Storyboard</div>
+                    <div class="tab" onclick="switchTab('dashboard',this)" data-i18n="dashboard">Dashboard</div>
+                    <div class="tab" onclick="switchTab('narration',this)" data-i18n="narration">🎙️ Narration</div>
                 </div>
 
                 <!-- Short Video -->
@@ -1005,26 +1005,26 @@
                 <!-- Narration -->
                 <div id="narration-tab" class="tab-content">
                     <div class="group">
-                        <label>Mode</label>
+                        <label data-i18n="mode">Mode</label>
                         <div class="pills">
-                            <div class="pill active" onclick="setNarrMode('auto')">Auto</div>
-                            <div class="pill" onclick="setNarrMode('manual')">Manual</div>
+                            <div class="pill active" onclick="setNarrMode('auto')" data-i18n="auto">Auto</div>
+                            <div class="pill" onclick="setNarrMode('manual')" data-i18n="manual">Manual</div>
                         </div>
                     </div>
                     <div id="narr-auto">
                         <div class="group">
-                            <label>Topic / Theme</label>
+                            <label data-i18n="topic">Topic / Theme</label>
                             <input type="text" id="narr-topic" placeholder="e.g. 春天的樱花...">
                         </div>
                         <div class="row">
                             <div class="group">
-                                <label>Images</label>
+                                <label data-i18n="images">Images</label>
                                 <select id="narr-img-count">
                                     <option>2</option><option selected>3</option><option>4</option><option>5</option><option>6</option>
                                 </select>
                             </div>
                             <div class="group">
-                                <label>Duration</label>
+                                <label data-i18n="duration">Duration</label>
                                 <div class="row">
                                     <input type="number" id="narr-dur" value="30" min="5" max="600" style="flex:1">
                                     <select id="narr-dur-unit" onchange="onNarrDurUnitChange()" style="width:70px">
@@ -1036,14 +1036,14 @@
                         </div>
                         <div class="row">
                             <div class="group">
-                                <label>TTS Engine</label>
+                                <label data-i18n="ttsEngine">TTS Engine</label>
                                 <select id="narr-engine" onchange="onNarrEngineChange()">
                                     <option value="mimo">MiMo (Free)</option>
                                     <option value="gemini">Gemini (Emotional)</option>
                                 </select>
                             </div>
                             <div class="group">
-                                <label>Voice</label>
+                                <label data-i18n="voice">Voice</label>
                                 <select id="narr-voice">
                                     <option value="mimo_default">MiMo Default</option>
                                     <option value="default_zh">Chinese Female</option>
@@ -1051,36 +1051,36 @@
                                 </select>
                             </div>
                         </div>
-                        <button class="gen-btn" onclick="autoNarrate()">🚀 One-Click Generate</button>
+                        <button class="gen-btn" onclick="autoNarrate()" data-i18n="oneClickGenerate">🚀 One-Click Generate</button>
                     </div>
                     <div id="narr-manual" style="display:none">
                         <div class="group">
-                            <label>Upload Images</label>
+                            <label data-i18n="uploadText">Upload Images</label>
                             <input type="file" id="narr-imgs" multiple accept="image/*" onchange="onNarrImgs(event)">
                             <div id="narr-img-list" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"></div>
                         </div>
                         <div class="group">
-                            <label>Narration Text</label>
+                            <label data-i18n="narrationText">Narration Text</label>
                             <textarea id="narr-text" placeholder="Enter your narration..."></textarea>
                             <div class="hint" id="narr-hint">0 chars</div>
                         </div>
-                        <button class="gen-btn" onclick="manualNarrate()">Generate Video</button>
+                        <button class="gen-btn" onclick="manualNarrate()" data-i18n="generateVideo">Generate Video</button>
                     </div>
                     <div class="progress" id="narr-progress">
                         <div class="progress-text" id="narr-prog-text">...</div>
                         <div class="bar"><div class="bar-fill" id="narr-prog-bar"></div></div>
                     </div>
                     <div class="result" id="narr-result">
-                        <h3>Video Generated!</h3>
+                        <h3 data-i18n="videoGenerated">Video Generated!</h3>
                         <video id="narr-video" controls></video>
-                        <a href="#" class="dl-btn" id="narr-dl" download>Download</a>
+                        <a href="#" class="dl-btn" id="narr-dl" download data-i18n="download">Download</a>
                     </div>
                 </div>
 
                 <!-- Templates -->
                 <div id="templates-tab" class="tab-content">
                     <div class="group">
-                        <h3>Prompt Templates</h3>
+                        <h3 data-i18n="promptTemplates">Prompt Templates</h3>
                         <div id="templates-list" style="display:grid;gap:12px;margin-top:16px"></div>
                     </div>
                 </div>
@@ -1089,17 +1089,17 @@
                 <div id="storyboard-tab" class="tab-content">
                     <div class="group">
                         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-                            <h3>Storyboard Editor</h3>
-                            <div class="check"><input type="checkbox" id="concat-shots"><label for="concat-shots">Concatenate output</label></div>
+                            <h3 data-i18n="storyboardEditor">Storyboard Editor</h3>
+                            <div class="check"><input type="checkbox" id="concat-shots"><label for="concat-shots" data-i18n="concatenate">Concatenate output</label></div>
                         </div>
                         <div id="shots-container" style="display:flex;flex-direction:column;gap:12px"></div>
                         <div style="display:flex;gap:8px;margin-top:16px">
-                            <button class="gen-btn" onclick="addShot()">+ Add Shot</button>
+                            <button class="gen-btn" onclick="addShot()" data-i18n="addShot">+ Add Shot</button>
                             <button class="gen-btn" onclick="addShots(5)">+ Add 5</button>
-                            <button class="gen-btn" onclick="clearShots()">Clear All</button>
+                            <button class="gen-btn" onclick="clearShots()" data-i18n="clearAll">Clear All</button>
                         </div>
                         <div id="shots-cost" style="text-align:right;margin-top:8px;color:var(--text2)">0 shots · $0.00</div>
-                        <button class="gen-btn" onclick="generateStoryboard()" style="margin-top:16px">Generate All Shots</button>
+                        <button class="gen-btn" onclick="generateStoryboard()" style="margin-top:16px" data-i18n="generateAll">Generate All Shots</button>
                     </div>
                     <div class="progress" id="story-progress">
                         <div class="progress-text" id="story-prog-text">...</div>
@@ -1110,15 +1110,15 @@
                 <!-- Dashboard -->
                 <div id="dashboard-tab" class="tab-content">
                     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px" id="stats-grid">
-                        <div class="stat-card"><div class="stat-value" id="stat-total-cost">$0.00</div><div class="stat-label">Total Cost</div></div>
-                        <div class="stat-card"><div class="stat-value" id="stat-total-gen">0</div><div class="stat-label">Generations</div></div>
-                        <div class="stat-card"><div class="stat-value" id="stat-success">0%</div><div class="stat-label">Success Rate</div></div>
-                        <div class="stat-card"><div class="stat-value" id="stat-time">0s</div><div class="stat-label">Avg Time</div></div>
+                        <div class="stat-card"><div class="stat-value" id="stat-total-cost">$0.00</div><div class="stat-label" data-i18n="totalCost">Total Cost</div></div>
+                        <div class="stat-card"><div class="stat-value" id="stat-total-gen">0</div><div class="stat-label" data-i18n="generations">Generations</div></div>
+                        <div class="stat-card"><div class="stat-value" id="stat-success">0%</div><div class="stat-label" data-i18n="successRate">Success Rate</div></div>
+                        <div class="stat-card"><div class="stat-value" id="stat-time">0s</div><div class="stat-label" data-i18n="avgTime">Avg Time</div></div>
                     </div>
                     <div class="group">
                         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-                            <h3>Generation History</h3>
-                            <button class="gen-btn" onclick="clearHistory()" style="padding:6px 12px;font-size:12px">Clear History</button>
+                            <h3 data-i18n="generationHistory">Generation History</h3>
+                            <button class="gen-btn" onclick="clearHistory()" style="padding:6px 12px;font-size:12px" data-i18n="clearHistory">Clear History</button>
                         </div>
                         <div style="overflow-x:auto">
                             <table style="width:100%;border-collapse:collapse;font-size:13px">
@@ -1287,7 +1287,35 @@
                 extendDesc: 'Extend an existing video using its last frame or the full video as reference',
                 sourceVideo: 'Source Video or Last Frame',
                 uploadVideoOrImage: 'Upload video (MP4) or last frame (JPG/PNG)',
-                extensionDuration: 'Extension Duration'
+                extensionDuration: 'Extension Duration',
+                // New features
+                templates: 'Templates',
+                storyboard: 'Storyboard',
+                dashboard: 'Dashboard',
+                narration: 'Narration',
+                mode: 'Mode',
+                auto: 'Auto',
+                manual: 'Manual',
+                topic: 'Topic',
+                images: 'Images',
+                ttsEngine: 'TTS Engine',
+                voice: 'Voice',
+                narrationText: 'Narration Text',
+                oneClickGenerate: 'One-Click Generate',
+                generateVideo: 'Generate Video',
+                promptTemplates: 'Prompt Templates',
+                storyboardEditor: 'Storyboard Editor',
+                concatenate: 'Concatenate',
+                addShot: 'Add Shot',
+                clearAll: 'Clear All',
+                generateAll: 'Generate All',
+                generationHistory: 'Generation History',
+                clearHistory: 'Clear History',
+                totalCost: 'Total Cost',
+                generations: 'Generations',
+                successRate: 'Success Rate',
+                avgTime: 'Avg Time',
+                videoGenerated: 'Video Generated'
             },
             zh: {
                 title: 'Veo Flow', subtitle: 'AI 视频与图像生成',
@@ -1311,7 +1339,35 @@
                 extendDesc: '使用视频或最后一帧作为参考来延长现有视频',
                 sourceVideo: '源视频或最后一帧',
                 uploadVideoOrImage: '上传视频 (MP4) 或最后一帧 (JPG/PNG)',
-                extensionDuration: '延长时长'
+                extensionDuration: '延长时长',
+                // New features
+                templates: '模板',
+                storyboard: '分镜',
+                dashboard: '统计',
+                narration: '文配视频',
+                mode: '模式',
+                auto: '自动',
+                manual: '手动',
+                topic: '主题',
+                images: '图片数量',
+                ttsEngine: '语音引擎',
+                voice: '音色',
+                narrationText: '旁白文本',
+                oneClickGenerate: '一键生成',
+                generateVideo: '生成视频',
+                promptTemplates: '提示词模板',
+                storyboardEditor: '分镜编辑器',
+                concatenate: '合并输出',
+                addShot: '添加镜头',
+                clearAll: '清空全部',
+                generateAll: '生成全部镜头',
+                generationHistory: '生成历史',
+                clearHistory: '清空历史',
+                totalCost: '总费用',
+                generations: '生成次数',
+                successRate: '成功率',
+                avgTime: '平均时间',
+                videoGenerated: '视频生成成功'
             }
         };
         let lang = 'en';

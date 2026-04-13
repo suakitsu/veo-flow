@@ -9,364 +9,364 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        /* ───────────────────────── Variables ───────────────────────── */
         :root {
-            --bg: #f5f7fa;
-            --card: rgba(255,255,255,0.92);
-            --card-solid: #fff;
+            --bg: #f0f4f9;
+            --panel: #ffffff;
+            --panel-2: #f8fafc;
             --text: #1e293b;
-            --text2: #94a3b8;
-            --border: rgba(0,0,0,0.06);
-            --primary: #1e293b;
-            --accent: #4A9EF5;
-            --accent-hover: #3b8de0;
-            --accent-glow: rgba(74,158,245,0.15);
-            --gradient: #4A9EF5;
-            --success: #059669;
-            --success-bg: rgba(5,150,105,0.06);
+            --text2: #64748b;
+            --text3: #94a3b8;
+            --border: #e2e8f0;
+            --accent: #3b82f6;
+            --accent-h: #2563eb;
+            --accent-glow: rgba(59,130,246,0.12);
+            --success: #10b981;
+            --success-bg: rgba(16,185,129,0.07);
             --warning: #f59e0b;
             --error: #ef4444;
-            --shadow: 0 1px 3px rgba(0,0,0,0.04), 0 2px 8px rgba(0,0,0,0.03);
-            --shadow-lg: 0 4px 20px rgba(0,0,0,0.06);
+            --radius: 14px;
+            --radius-sm: 10px;
+            --shadow: 0 1px 3px rgba(0,0,0,0.05), 0 4px 16px rgba(0,0,0,0.04);
+            --shadow-lg: 0 8px 32px rgba(0,0,0,0.08);
         }
 
         [data-theme="dark"] {
-            --bg: #0f1420;
-            --card: rgba(22,28,42,0.9);
-            --card-solid: #1a2235;
+            --bg: #0d1117;
+            --panel: #161b27;
+            --panel-2: #1e2535;
             --text: #e2e8f0;
-            --text2: #64748b;
-            --border: rgba(255,255,255,0.06);
-            --primary: #e2e8f0;
+            --text2: #8b9ab0;
+            --text3: #4a5568;
+            --border: rgba(255,255,255,0.07);
             --accent: #60a5fa;
-            --accent-hover: #7ab8ff;
-            --accent-glow: rgba(96,165,250,0.15);
-            --gradient: #60a5fa;
+            --accent-h: #93c5fd;
+            --accent-glow: rgba(96,165,250,0.12);
             --success: #34d399;
-            --success-bg: rgba(52,211,153,0.08);
-            --shadow: 0 1px 3px rgba(0,0,0,0.2), 0 2px 8px rgba(0,0,0,0.15);
-            --shadow-lg: 0 4px 20px rgba(0,0,0,0.25);
+            --success-bg: rgba(52,211,153,0.07);
+            --shadow: 0 1px 3px rgba(0,0,0,0.3), 0 4px 16px rgba(0,0,0,0.2);
+            --shadow-lg: 0 8px 32px rgba(0,0,0,0.35);
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        /* ───────────────────────── Reset ───────────────────────── */
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             background: var(--bg);
             min-height: 100vh;
-            padding: 24px 20px;
             color: var(--text);
-            transition: background 0.4s ease, color 0.3s ease;
+            transition: background .3s, color .25s;
         }
 
-        .container {
-            max-width: 800px;
+        /* ───────────────────────── Layout ───────────────────────── */
+        .app-wrap {
+            max-width: 860px;
             margin: 0 auto;
-            padding: 0 20px;
+            padding: 28px 20px 80px;
         }
 
-        /* Header */
-        .header {
+        /* ───────────────────────── Header ───────────────────────── */
+        .hd {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
-            padding: 0 4px;
+            margin-bottom: 22px;
         }
 
-        .header h1 {
-            font-size: 26px;
+        .hd-brand h1 {
+            font-size: 24px;
             font-weight: 700;
-            color: var(--text);
+            letter-spacing: -.4px;
         }
 
-        .header p {
-            color: var(--text2);
+        .hd-brand p {
             font-size: 13px;
-            margin-top: 4px;
-            letter-spacing: 0.3px;
+            color: var(--text2);
+            margin-top: 2px;
         }
 
-        .header-actions {
-            display: flex;
-            gap: 8px;
-        }
+        .hd-actions { display: flex; gap: 8px; }
 
         .icon-btn {
-            width: 40px;
-            height: 40px;
-            border-radius: 10px;
+            width: 38px; height: 38px;
+            border-radius: var(--radius-sm);
             border: 1px solid var(--border);
-            background: var(--card);
+            background: var(--panel);
             color: var(--text);
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            transition: all 0.2s;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px;
+            transition: border-color .2s, color .2s, box-shadow .2s;
+            box-shadow: var(--shadow);
         }
 
-        .icon-btn:hover {
-            border-color: var(--accent);
-            color: var(--accent);
-        }
+        .icon-btn:hover { border-color: var(--accent); color: var(--accent); }
 
-        /* Card */
-        .card {
-            background: var(--card);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-radius: 20px;
+        /* ───────────────────────── Panel (main card) ───────────────────────── */
+        .panel {
+            background: var(--panel);
+            border-radius: var(--radius);
             box-shadow: var(--shadow-lg);
-            overflow: hidden;
             border: 1px solid var(--border);
-            transition: box-shadow 0.3s ease;
-        }
-        .card:hover {
-            box-shadow: var(--shadow-lg), 0 0 0 1px var(--accent-glow);
+            overflow: hidden;
         }
 
-        .form {
-            padding: 28px;
+        /* ───────────────────────── Tabs ───────────────────────── */
+        .tabs-wrap {
+            border-bottom: 1px solid var(--border);
+            padding: 0 24px;
+            overflow-x: auto;
+            scrollbar-width: none;
         }
+        .tabs-wrap::-webkit-scrollbar { display: none; }
 
-        /* Tabs */
         .tabs {
             display: flex;
-            gap: 6px;
-            margin-bottom: 24px;
-            flex-wrap: nowrap;
+            gap: 0;
+            white-space: nowrap;
         }
 
         .tab {
-            flex: 1;
-            padding: 14px 8px;
-            text-align: center;
-            cursor: pointer;
-            border-radius: 12px;
-            font-size: 14px;
+            padding: 14px 18px;
+            font-size: 13.5px;
             font-weight: 500;
             color: var(--text2);
-            background: transparent;
+            cursor: pointer;
+            background: none;
             border: none;
-            transition: all 0.25s ease;
-            white-space: nowrap;
-            min-width: 80px;
+            border-bottom: 2px solid transparent;
+            transition: color .2s, border-color .2s;
             position: relative;
+            white-space: nowrap;
         }
+
+        .tab:hover { color: var(--text); }
 
         .tab.active {
-            background: var(--accent);
-            color: #fff;
+            color: var(--accent);
+            border-bottom-color: var(--accent);
         }
 
-        .tab:hover:not(.active) {
-            color: var(--text);
-            background: var(--border);
-        }
+        /* More dropdown */
+        .tab-more { position: relative; }
 
-        .tab-content {
+        .more-menu {
             display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        /* Form elements */
-        .group {
-            margin-bottom: 16px;
-        }
-
-        .group label {
-            display: block;
-            font-size: 12px;
-            color: var(--text2);
-            margin-bottom: 6px;
-            font-weight: 500;
-        }
-
-        .group input,
-        .group textarea,
-        .group select {
-            width: 100%;
-            padding: 12px 14px;
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            background: var(--panel);
             border: 1px solid var(--border);
-            border-radius: 12px;
-            font-size: 14px;
-            color: var(--text);
-            background: var(--card);
-            font-family: inherit;
-            transition: all 0.2s;
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow-lg);
+            z-index: 200;
+            min-width: 140px;
+            padding: 4px 0;
         }
 
-        .group input:focus,
-        .group textarea:focus,
-        .group select:focus {
+        .more-menu.open { display: block; }
+
+        .more-item {
+            padding: 10px 16px;
+            font-size: 13px;
+            color: var(--text);
+            cursor: pointer;
+            transition: background .15s;
+        }
+
+        .more-item:hover { background: var(--accent-glow); color: var(--accent); }
+
+        /* ───────────────────────── Form body ───────────────────────── */
+        .form-body { padding: 24px; }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* ───────────────────────── Form elements ───────────────────────── */
+        .field { margin-bottom: 14px; }
+
+        .field label {
+            display: block;
+            font-size: 11.5px;
+            font-weight: 600;
+            color: var(--text2);
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            margin-bottom: 6px;
+        }
+
+        .field input,
+        .field textarea,
+        .field select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 13.5px;
+            color: var(--text);
+            background: var(--bg);
+            font-family: inherit;
+            transition: border-color .2s, box-shadow .2s;
+        }
+
+        .field input:focus,
+        .field textarea:focus,
+        .field select:focus {
             outline: none;
             border-color: var(--accent);
             box-shadow: 0 0 0 3px var(--accent-glow);
         }
 
-        .group textarea {
-            min-height: 100px;
+        .field textarea {
+            min-height: 88px;
             resize: vertical;
             line-height: 1.6;
         }
 
-        .row {
+        .row2 {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 12px;
         }
 
+        .row3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+        }
+
         .hint {
             font-size: 11px;
-            color: var(--text2);
+            color: var(--text3);
             margin-top: 4px;
         }
 
-        /* Pills */
-        .pills {
+        /* Checkbox */
+        .check-line {
             display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
+            align-items: center;
+            gap: 7px;
+            margin-bottom: 14px;
         }
+
+        .check-line input[type="checkbox"] {
+            width: 16px; height: 16px;
+            accent-color: var(--accent);
+            cursor: pointer;
+        }
+
+        .check-line label { font-size: 13px; color: var(--text2); cursor: pointer; }
+
+        /* Pills (duration selector) */
+        .pills { display: flex; gap: 6px; flex-wrap: wrap; }
 
         .pill {
-            padding: 10px 20px;
+            padding: 7px 14px;
             border: 1px solid var(--border);
-            border-radius: 10px;
-            cursor: pointer;
+            border-radius: 8px;
             font-size: 13px;
             color: var(--text2);
-            background: var(--card);
-            transition: all 0.2s;
-        }
-
-        .pill.active {
-            background: var(--primary);
-            color: var(--card);
-            border-color: var(--primary);
-        }
-
-        /* Upload */
-        .upload {
-            border: 2px dashed var(--border);
-            border-radius: 12px;
-            padding: 24px;
-            text-align: center;
             cursor: pointer;
-            transition: all 0.2s;
+            background: var(--bg);
+            transition: all .2s;
         }
 
-        .upload:hover {
+        .pill.active,
+        .pill:hover {
+            background: var(--accent);
+            color: #fff;
             border-color: var(--accent);
         }
 
-        .upload input {
-            display: none;
-        }
-
-        .upload-text {
-            color: var(--text2);
-            font-size: 13px;
-        }
-
-        .preview {
-            margin-top: 12px;
-            display: none;
-        }
-
-        .preview.show {
-            display: block;
-        }
-
-        .preview img {
-            max-width: 100%;
-            max-height: 160px;
-            border-radius: 10px;
-        }
-
-        /* Check */
-        .check {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 16px;
-        }
-
-        .check input {
-            width: 18px;
-            height: 18px;
-            accent-color: var(--primary);
-        }
-
-        .check label {
-            font-size: 13px;
-            color: var(--text2);
+        /* ───────────────────────── Upload zone ───────────────────────── */
+        .upload-zone {
+            border: 2px dashed var(--border);
+            border-radius: var(--radius-sm);
+            padding: 20px;
+            text-align: center;
             cursor: pointer;
+            transition: border-color .2s, background .2s;
         }
 
-        /* Generate button */
+        .upload-zone:hover { border-color: var(--accent); background: var(--accent-glow); }
+        .upload-zone input { display: none; }
+        .upload-zone p { font-size: 13px; color: var(--text2); margin-top: 4px; }
+
+        .upload-preview {
+            margin-top: 10px;
+            display: none;
+        }
+
+        .upload-preview.show { display: block; }
+
+        .upload-preview img,
+        .upload-preview video {
+            max-width: 100%;
+            max-height: 140px;
+            border-radius: 8px;
+        }
+
+        /* ───────────────────────── Generate button ───────────────────────── */
         .gen-btn {
             width: 100%;
-            padding: 16px;
+            padding: 14px;
             background: var(--accent);
             color: #fff;
             border: none;
-            border-radius: 14px;
-            font-size: 15px;
+            border-radius: var(--radius-sm);
+            font-size: 14.5px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s ease;
-            margin-top: 12px;
-            letter-spacing: 0.3px;
+            transition: background .2s, transform .15s, box-shadow .2s;
+            margin-top: 8px;
+            letter-spacing: .2px;
         }
 
         .gen-btn:hover {
-            background: var(--accent-hover);
+            background: var(--accent-h);
             transform: translateY(-1px);
-            box-shadow: 0 4px 12px var(--accent-glow);
+            box-shadow: 0 4px 14px var(--accent-glow);
         }
 
-        .gen-btn:active {
-            transform: translateY(0);
-        }
+        .gen-btn:active { transform: translateY(0); }
 
         .gen-btn:disabled {
-            opacity: 0.5;
+            opacity: .5;
             cursor: not-allowed;
             transform: none;
             box-shadow: none;
         }
 
-        /* Progress & Result */
+        .gen-btn.secondary {
+            background: var(--panel-2);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .gen-btn.secondary:hover { background: var(--border); }
+
+        /* ───────────────────────── Progress ───────────────────────── */
         .progress {
-            margin-top: 16px;
-            padding: 16px;
+            margin-top: 14px;
+            padding: 14px 16px;
             background: var(--bg);
-            border-radius: 12px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
             display: none;
         }
 
-        .progress.show {
-            display: block;
-        }
+        .progress.show { display: block; }
 
-        .progress-text {
-            text-align: center;
+        .prog-text {
+            font-size: 12.5px;
             color: var(--text2);
-            font-size: 13px;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
+            text-align: center;
         }
 
         .bar {
-            height: 4px;
+            height: 3px;
             background: var(--border);
             border-radius: 2px;
             overflow: hidden;
@@ -376,82 +376,295 @@
             height: 100%;
             background: var(--accent);
             width: 0%;
-            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-            border-radius: 2px;
+            transition: width .5s cubic-bezier(.4,0,.2,1);
         }
 
+        /* ───────────────────────── Result ───────────────────────── */
         .result {
-            margin-top: 16px;
-            padding: 20px;
+            margin-top: 14px;
+            padding: 18px;
             background: var(--success-bg);
-            border-radius: 14px;
-            border: 1px solid rgba(5,150,105,0.15);
+            border-radius: var(--radius-sm);
+            border: 1px solid rgba(16,185,129,.15);
             display: none !important;
         }
 
-        .result.show {
-            display: block !important;
-        }
+        .result.show { display: block !important; }
 
-        .result h3 {
-            color: var(--success);
-            font-size: 14px;
-            margin-bottom: 12px;
-        }
+        .result h3 { color: var(--success); font-size: 13px; margin-bottom: 10px; }
 
         .result video,
-        .result img {
-            width: 100%;
-            border-radius: 10px;
-        }
+        .result img { width: 100%; border-radius: 8px; }
 
         .dl-btn {
             display: inline-block;
-            margin-top: 12px;
-            padding: 12px 24px;
+            margin-top: 10px;
+            padding: 10px 20px;
             background: var(--success);
             color: #fff;
             text-decoration: none;
-            border-radius: 10px;
+            border-radius: 8px;
             font-size: 13px;
+            font-weight: 500;
+            transition: opacity .2s;
+        }
+
+        .dl-btn:hover { opacity: .85; }
+
+        /* ───────────────────────── Section divider ───────────────────────── */
+        .section-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-sep {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 20px 0;
+        }
+
+        /* ───────────────────────── Stat tiles (Dashboard) ───────────────────────── */
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .stat-tile {
+            padding: 16px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            text-align: center;
+            background: var(--bg);
+        }
+
+        .stat-v {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--accent);
+            line-height: 1.2;
+        }
+
+        .stat-l {
+            font-size: 11px;
+            color: var(--text2);
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: .4px;
             font-weight: 500;
         }
 
-        /* AI Panel */
-        .ai-toggle {
+        /* ───────────────────────── History table ───────────────────────── */
+        .hist-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12.5px;
+        }
+
+        .hist-table th {
+            text-align: left;
+            padding: 8px 10px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text2);
+            text-transform: uppercase;
+            letter-spacing: .4px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .hist-table td {
+            padding: 9px 10px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text2);
+        }
+
+        .hist-table tr:last-child td { border-bottom: none; }
+
+        .hist-table tr:hover td { background: var(--accent-glow); color: var(--text); }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 7px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .badge-ok { background: var(--success-bg); color: var(--success); }
+        .badge-err { background: rgba(239,68,68,.08); color: var(--error); }
+        .badge-pend { background: rgba(245,158,11,.08); color: var(--warning); }
+
+        /* ───────────────────────── Template cards ───────────────────────── */
+        .tpl-cat-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 10px;
+        }
+
+        .tpl-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .tpl-card {
+            padding: 12px 14px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: border-color .2s, background .2s;
+            background: var(--bg);
+        }
+
+        .tpl-card:hover { border-color: var(--accent); background: var(--accent-glow); }
+
+        .tpl-card h4 { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+        .tpl-card p { font-size: 11.5px; color: var(--text2); line-height: 1.4; }
+        .tpl-card .tpl-meta { font-size: 11px; color: var(--accent); margin-top: 6px; }
+
+        /* ───────────────────────── Shot rows (Storyboard) ───────────────────────── */
+        .shot-list { display: flex; flex-direction: column; gap: 8px; }
+
+        .shot-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--bg);
+        }
+
+        .shot-num {
+            width: 24px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text3);
+            flex-shrink: 0;
+            text-align: center;
+        }
+
+        .shot-row input[type="text"],
+        .shot-row input[type="number"] {
+            padding: 7px 10px;
+            border: 1px solid var(--border);
+            border-radius: 7px;
+            font-size: 13px;
+            background: var(--panel);
+            color: var(--text);
+            font-family: inherit;
+            transition: border-color .2s;
+        }
+
+        .shot-row input[type="text"]:focus,
+        .shot-row input[type="number"]:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .shot-row input[type="text"] { flex: 1; }
+        .shot-row input[type="number"] { width: 56px; }
+
+        .shot-row select {
+            padding: 7px 10px;
+            border: 1px solid var(--border);
+            border-radius: 7px;
+            font-size: 12.5px;
+            background: var(--panel);
+            color: var(--text);
+            font-family: inherit;
+        }
+
+        .shot-del {
+            width: 28px; height: 28px;
+            border: none;
+            border-radius: 7px;
+            background: rgba(239,68,68,.08);
+            color: var(--error);
+            cursor: pointer;
+            font-size: 15px;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+            transition: background .2s;
+        }
+
+        .shot-del:hover { background: rgba(239,68,68,.18); }
+
+        .story-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 14px;
+        }
+
+        .story-cost {
+            text-align: right;
+            font-size: 12px;
+            color: var(--text2);
+            margin-top: 8px;
+        }
+
+        /* ───────────────────────── Narration images preview ───────────────────────── */
+        .narr-img-strip {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+
+        .narr-img-thumb {
+            width: 64px; height: 64px;
+            object-fit: cover;
+            border-radius: 7px;
+            border: 1px solid var(--border);
+        }
+
+        /* ───────────────────────── Spinner ───────────────────────── */
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .spinner {
+            display: inline-block;
+            width: 13px; height: 13px;
+            border: 2px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin .6s linear infinite;
+        }
+
+        /* ───────────────────────── AI Panel ───────────────────────── */
+        .ai-fab {
             position: fixed;
-            right: 20px;
-            bottom: 20px;
-            width: 56px;
-            height: 56px;
+            right: 20px; bottom: 20px;
+            width: 52px; height: 52px;
             border-radius: 50%;
             background: var(--accent);
             color: #fff;
             border: none;
-            font-size: 24px;
+            font-size: 22px;
             cursor: pointer;
-            box-shadow: 0 4px 15px var(--accent-glow);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s ease;
+            box-shadow: 0 4px 16px var(--accent-glow);
+            display: flex; align-items: center; justify-content: center;
+            transition: background .2s, transform .2s;
             z-index: 1000;
         }
 
-        .ai-toggle:hover {
-            background: var(--accent-hover);
-            transform: scale(1.05);
-        }
+        .ai-fab:hover { background: var(--accent-h); transform: scale(1.05); }
 
         .ai-panel {
             position: fixed;
-            right: 20px;
-            bottom: 90px;
-            width: 360px;
-            max-height: 70vh;
-            background: var(--card);
-            border-radius: 20px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            right: 20px; bottom: 82px;
+            width: 340px;
+            max-height: 72vh;
+            background: var(--panel);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
             border: 1px solid var(--border);
             overflow: hidden;
             display: none;
@@ -459,30 +672,23 @@
             z-index: 999;
         }
 
-        .ai-panel.show {
-            display: flex;
-        }
+        .ai-panel.show { display: flex; }
 
-        .ai-header {
-            padding: 16px 20px;
+        .ai-head {
+            padding: 14px 18px;
             background: var(--accent);
             color: #fff;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-shrink: 0;
         }
 
-        .ai-header h3 {
-            font-size: 14px;
-            font-weight: 600;
-        }
+        .ai-head h3 { font-size: 13.5px; font-weight: 600; }
 
         .ai-close {
-            background: none;
-            border: none;
-            color: #fff;
-            font-size: 20px;
-            cursor: pointer;
+            background: none; border: none; color: #fff;
+            font-size: 20px; cursor: pointer; line-height: 1;
         }
 
         .ai-body {
@@ -491,34 +697,32 @@
             flex: 1;
         }
 
-        .ai-section {
-            margin-bottom: 16px;
-        }
+        .ai-section { margin-bottom: 16px; }
 
         .ai-section-title {
-            font-size: 12px;
+            font-size: 11px;
+            font-weight: 600;
             color: var(--text2);
+            text-transform: uppercase;
+            letter-spacing: .5px;
             margin-bottom: 8px;
-            font-weight: 500;
         }
 
-        .style-chips {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-        }
+        .style-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 
         .style-chip {
-            padding: 8px 14px;
+            padding: 6px 12px;
             border: 1px solid var(--border);
             border-radius: 20px;
             font-size: 12px;
             cursor: pointer;
-            transition: all 0.2s;
-            background: var(--card);
+            transition: all .2s;
+            background: var(--bg);
+            color: var(--text);
         }
 
-        .style-chip.active {
+        .style-chip.active,
+        .style-chip:hover {
             background: var(--accent);
             color: #fff;
             border-color: var(--accent);
@@ -526,1527 +730,1541 @@
 
         .ai-btn {
             width: 100%;
-            padding: 12px;
-            margin-bottom: 8px;
+            padding: 10px 12px;
+            margin-bottom: 7px;
             border: 1px solid var(--border);
-            border-radius: 10px;
-            background: var(--card);
+            border-radius: 8px;
+            background: var(--bg);
             color: var(--text);
             cursor: pointer;
             font-size: 13px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            transition: all 0.2s;
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            transition: all .2s;
+            font-family: inherit;
         }
 
-        .ai-btn:hover {
-            border-color: var(--accent);
-            color: var(--accent);
-        }
-
-        .ai-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
+        .ai-btn:hover { border-color: var(--accent); color: var(--accent); }
+        .ai-btn:disabled { opacity: .5; cursor: not-allowed; }
 
         .ai-result {
             padding: 12px;
             background: var(--bg);
-            border-radius: 10px;
-            font-size: 12px;
+            border-radius: 8px;
+            font-size: 12.5px;
             line-height: 1.6;
             display: none;
+            border: 1px solid var(--border);
         }
 
-        .ai-result.show {
-            display: block;
-        }
-
-        .ai-result .label {
-            font-size: 10px;
-            color: var(--text2);
-            text-transform: uppercase;
-            margin-bottom: 4px;
-        }
-
-        .ai-result .value {
-            margin-bottom: 8px;
-        }
-
-        .ai-result .value:last-child {
-            margin-bottom: 0;
-        }
+        .ai-result.show { display: block; }
+        .ai-result .lbl { font-size: 10px; color: var(--text3); text-transform: uppercase; margin-bottom: 2px; }
+        .ai-result .val { margin-bottom: 8px; }
+        .ai-result .val:last-child { margin-bottom: 0; }
 
         .ai-use-btn {
+            display: block;
             width: 100%;
-            padding: 10px;
+            padding: 8px;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 7px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-top: 8px;
+            font-family: inherit;
+        }
+
+        .ai-chat-row { display: flex; gap: 7px; margin-top: 10px; }
+
+        .ai-chat-row input {
+            flex: 1;
+            padding: 9px 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 13px;
+            background: var(--bg);
+            color: var(--text);
+            font-family: inherit;
+        }
+
+        .ai-chat-row input:focus { outline: none; border-color: var(--accent); }
+
+        .ai-chat-row button {
+            padding: 9px 14px;
             background: var(--accent);
             color: #fff;
             border: none;
             border-radius: 8px;
-            font-size: 12px;
-            cursor: pointer;
-            margin-top: 8px;
-        }
-
-        .ai-chat {
-            display: flex;
-            gap: 8px;
-            margin-top: 12px;
-        }
-
-        .ai-chat input {
-            flex: 1;
-            padding: 10px 12px;
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            font-size: 13px;
-            background: var(--card);
-            color: var(--text);
-        }
-
-        .ai-chat input:focus {
-            outline: none;
-            border-color: var(--accent);
-        }
-
-        .ai-chat button {
-            padding: 10px 16px;
-            background: var(--accent);
-            color: #fff;
-            border: none;
-            border-radius: 10px;
             font-size: 13px;
             cursor: pointer;
+            font-family: inherit;
         }
 
         .ai-reply {
             margin-top: 10px;
-            padding: 12px;
+            padding: 11px;
             background: var(--bg);
-            border-radius: 10px;
-            font-size: 12px;
+            border-radius: 8px;
+            font-size: 12.5px;
             line-height: 1.6;
+            border: 1px solid var(--border);
             display: none;
         }
 
-        /* Proxy panel */
+        /* ───────────────────────── Proxy panel ───────────────────────── */
+        .proxy-fab {
+            position: fixed;
+            left: 20px; bottom: 20px;
+            padding: 10px 14px;
+            border-radius: 10px;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            cursor: pointer;
+            font-size: 12px;
+            display: flex; align-items: center; gap: 6px;
+            box-shadow: var(--shadow);
+            z-index: 997;
+            color: var(--text);
+            transition: border-color .2s;
+        }
+
+        .proxy-fab:hover { border-color: var(--accent); }
+
+        .proxy-dot {
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            background: #4ade80;
+            flex-shrink: 0;
+        }
+
+        .proxy-dot.off { background: #f87171; }
+
         .proxy-panel {
             position: fixed;
-            left: 20px;
-            bottom: 20px;
-            background: var(--card);
-            border-radius: 16px;
+            left: 20px; bottom: 70px;
+            background: var(--panel);
+            border-radius: var(--radius);
             padding: 16px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            box-shadow: var(--shadow-lg);
             border: 1px solid var(--border);
-            width: 280px;
+            width: 260px;
             display: none;
             z-index: 998;
         }
 
-        .proxy-panel.show {
-            display: block;
-        }
+        .proxy-panel.show { display: block; }
 
-        .proxy-toggle-fixed {
-            position: fixed;
-            left: 20px;
-            bottom: 20px;
-            padding: 12px 16px;
-            border-radius: 12px;
-            background: var(--card);
-            border: 1px solid var(--border);
-            cursor: pointer;
-            font-size: 12px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            box-shadow: var(--shadow);
-            z-index: 997;
-        }
-
-        .proxy-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #4ade80;
-        }
-
-        .proxy-dot.off {
-            background: #f87171;
-        }
-
-        /* Responsive */
+        /* ───────────────────────── Responsive ───────────────────────── */
         @media (max-width: 600px) {
-            body {
-                padding: 12px;
-            }
-
-            .header h1 {
-                font-size: 20px;
-            }
-
-            .form {
-                padding: 16px;
-            }
-
-            .row {
-                grid-template-columns: 1fr;
-            }
-
+            .app-wrap { padding: 14px 12px 80px; }
+            .hd-brand h1 { font-size: 20px; }
+            .form-body { padding: 16px; }
+            .row2, .row3 { grid-template-columns: 1fr; }
+            .stat-grid { grid-template-columns: 1fr 1fr; }
+            .tpl-grid { grid-template-columns: 1fr; }
             .ai-panel {
-                right: 10px;
-                left: 10px;
-                width: auto;
-                bottom: 80px;
+                right: 10px; left: 10px;
+                width: auto; bottom: 76px;
             }
-
-            .ai-toggle {
-                right: 10px;
-                bottom: 10px;
-            }
-
-            .proxy-panel,
-            .proxy-toggle-fixed {
-                left: 10px;
-                bottom: 80px;
-            }
-        }
-
-        /* Spinner */
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        .spinner {
-            display: inline-block;
-            width: 14px;
-            height: 14px;
-            border: 2px solid var(--border);
-            border-top-color: var(--accent);
-            border-radius: 50%;
-            animation: spin 0.6s linear infinite;
-        }
-
-        /* Templates, Storyboard, Dashboard styles */
-        .template-card {
-            padding: 16px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .template-card:hover {
-            border-color: var(--accent);
-            box-shadow: var(--shadow);
-        }
-        .template-card h4 {
-            margin: 0 0 8px 0;
-            font-size: 14px;
-        }
-        .template-card p {
-            margin: 0;
-            font-size: 12px;
-            color: var(--text2);
-        }
-        .shot-row {
-            display: grid;
-            grid-template-columns: 40px 1fr 100px 70px 40px;
-            gap: 8px;
-            align-items: center;
-            padding: 12px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            background: var(--card);
-        }
-        .shot-row input, .shot-row select {
-            padding: 6px 10px;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            font-size: 13px;
-        }
-        .shot-row button {
-            padding: 6px;
-            background: var(--error);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-        }
-        .stat-card {
-            padding: 16px;
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            text-align: center;
-        }
-        .stat-value {
-            font-size: 24px;
-            font-weight: 700;
-            color: var(--accent);
-        }
-        .stat-label {
-            font-size: 12px;
-            color: var(--text2);
-            margin-top: 4px;
-        }
-        #history-body tr {
-            border-bottom: 1px solid var(--border);
-        }
-        #history-body td {
-            padding: 8px;
-            font-size: 12px;
-        }
-        .menu-item {
-            padding: 10px 16px;
-            cursor: pointer;
-            font-size: 13px;
-            white-space: nowrap;
-        }
-        .menu-item:hover {
-            background: var(--accent-glow);
+            .ai-fab { right: 10px; bottom: 10px; }
+            .proxy-fab, .proxy-panel { left: 10px; }
         }
     </style>
 </head>
 
 <body data-theme="light">
-    <div class="container">
-        <div class="header">
-            <div>
-                <h1 data-i18n="title">Veo Flow</h1>
-                <p data-i18n="subtitle">AI Video & Image Generation</p>
-            </div>
-            <div class="header-actions">
-                <button class="icon-btn" onclick="toggleTheme()" title="Toggle Theme">🌓</button>
-                <button class="icon-btn" onclick="toggleLang()" title="Switch Language">🌐</button>
-            </div>
+<div class="app-wrap">
+
+    <!-- Header -->
+    <div class="hd">
+        <div class="hd-brand">
+            <h1 data-i18n="title">Veo Flow</h1>
+            <p data-i18n="subtitle">AI Video &amp; Image Generation</p>
         </div>
-
-        <div class="card">
-            <div class="form">
-                <div class="tabs">
-                    <div class="tab active" onclick="switchTab('short',this)" data-i18n="tabShort">Short Video</div>
-                    <div class="tab" onclick="switchTab('long',this)" data-i18n="tabLong">Long Video</div>
-                    <div class="tab" onclick="switchTab('extend',this)" data-i18n="tabExtend">Extend Video</div>
-                    <div class="tab" onclick="switchTab('image',this)" data-i18n="tabImage">Image</div>
-                    <div class="tab" onclick="switchTab('narration',this)" data-i18n="narration">🎙️ Narration</div>
-                    <div class="tab" onclick="toggleMoreMenu()" style="position:relative">⋮ More
-                        <div id="more-menu" style="display:none;position:absolute;top:100%;left:0;background:var(--card);border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow-lg);z-index:100;min-width:120px">
-                            <div class="menu-item" onclick="switchTab('templates',this);hideMoreMenu()" data-i18n="templates">Templates</div>
-                            <div class="menu-item" onclick="switchTab('storyboard',this);hideMoreMenu()" data-i18n="storyboard">Storyboard</div>
-                            <div class="menu-item" onclick="switchTab('dashboard',this);hideMoreMenu()" data-i18n="dashboard">Dashboard</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Short Video -->
-                <div id="short-tab" class="tab-content active">
-                    <div class="group">
-                        <label data-i18n="prompt">Prompt</label>
-                        <textarea id="short-prompt" placeholder="Describe your video..."></textarea>
-                    </div>
-                    <div class="group">
-                        <label data-i18n="negative">Negative Prompt</label>
-                        <textarea id="short-neg" placeholder="What to avoid..." style="min-height:60px"></textarea>
-                    </div>
-                    <div class="check">
-                        <input type="checkbox" id="short-enhance">
-                        <label for="short-enhance" data-i18n="enhance">Enhance Prompt</label>
-                    </div>
-                    <div class="row">
-                        <div class="group">
-                            <label data-i18n="model">Model</label>
-                            <select id="short-model">
-                                <option value="veo3.1">Veo 3.1</option>
-                                <option value="veo3.1-fast">Veo 3.1 Fast</option>
-                                <option value="veo3">Veo 3</option>
-                                <option value="veo2">Veo 2</option>
-                            </select>
-                        </div>
-                        <div class="group">
-                            <label data-i18n="duration">Duration</label>
-                            <div class="pills">
-                                <div class="pill" data-v="4" onclick="pickDur(this)">4s</div>
-                                <div class="pill" data-v="6" onclick="pickDur(this)">6s</div>
-                                <div class="pill active" data-v="8" onclick="pickDur(this)">8s</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="group">
-                            <label data-i18n="ratio">Aspect Ratio</label>
-                            <select id="short-ratio">
-                                <option value="16:9">16:9 Landscape</option>
-                                <option value="9:16">9:16 Portrait</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Long Video -->
-                <div id="long-tab" class="tab-content">
-                    <div class="group">
-                        <label data-i18n="prompt">Prompt</label>
-                        <textarea id="long-prompt" placeholder="Describe your video..."></textarea>
-                    </div>
-                    <div class="group">
-                        <label data-i18n="negative">Negative Prompt</label>
-                        <textarea id="long-neg" placeholder="What to avoid..." style="min-height:60px"></textarea>
-                    </div>
-                    <div class="check">
-                        <input type="checkbox" id="long-enhance">
-                        <label for="long-enhance" data-i18n="enhance">Enhance Prompt</label>
-                    </div>
-                    <div class="row">
-                        <div class="group">
-                            <label data-i18n="totalDuration">Total Duration (s)</label>
-                            <input type="number" id="long-time" value="16" min="4" max="300">
-                            <div class="hint" data-i18n="splitHint">Split into 8s segments</div>
-                        </div>
-                        <div class="group">
-                            <label data-i18n="model">Model</label>
-                            <select id="long-model">
-                                <option value="veo3.1">Veo 3.1</option>
-                                <option value="veo3.1-fast">Veo 3.1 Fast</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="group">
-                            <label data-i18n="ratio">Aspect Ratio</label>
-                            <select id="long-ratio">
-                                <option value="16:9">16:9</option>
-                                <option value="9:16">9:16</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Extend Video -->
-                <div id="extend-tab" class="tab-content">
-                    <div class="group">
-                        <label data-i18n="extendDesc">Extend an existing video using its last frame or the full video as
-                            reference</label>
-                    </div>
-                    <div class="group">
-                        <label data-i18n="sourceVideo">Source Video or Last Frame</label>
-                        <div class="upload" onclick="document.getElementById('extend-input').click()">
-                            <input type="file" id="extend-input" accept="video/*,image/*"
-                                onchange="onExtendUpload(event)">
-                            <div class="upload-text" data-i18n="uploadVideoOrImage">Upload video (MP4) or last frame
-                                (JPG/PNG)</div>
-                        </div>
-                        <div class="preview" id="extend-preview"><video id="extend-video-preview" controls
-                                style="max-width:100%;max-height:160px;border-radius:10px;display:none;"></video><img
-                                id="extend-img-preview" src=""
-                                style="max-width:100%;max-height:160px;border-radius:10px;display:none;"></div>
-                    </div>
-                    <div class="group">
-                        <label data-i18n="prompt">Prompt for Extension</label>
-                        <textarea id="extend-prompt" placeholder="Describe how the video should continue..."></textarea>
-                    </div>
-                    <div class="group">
-                        <label data-i18n="negative">Negative Prompt</label>
-                        <textarea id="extend-neg" placeholder="What to avoid..." style="min-height:60px"></textarea>
-                    </div>
-                    <div class="check">
-                        <input type="checkbox" id="extend-enhance">
-                        <label for="extend-enhance" data-i18n="enhance">Enhance Prompt</label>
-                    </div>
-                    <div class="row">
-                        <div class="group">
-                            <label data-i18n="model">Model</label>
-                            <select id="extend-model">
-                                <option value="veo3.1">Veo 3.1</option>
-                                <option value="veo3.1-fast">Veo 3.1 Fast</option>
-                            </select>
-                        </div>
-                        <div class="group">
-                            <label data-i18n="duration">Extension Duration</label>
-                            <div class="pills">
-                                <div class="pill" data-v="4" onclick="pickExtendDur(this)">4s</div>
-                                <div class="pill active" data-v="8" onclick="pickExtendDur(this)">8s</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="group">
-                            <label data-i18n="ratio">Aspect Ratio</label>
-                            <select id="extend-ratio">
-                                <option value="16:9">16:9</option>
-                                <option value="9:16">9:16</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Image -->
-                <div id="image-tab" class="tab-content">
-                    <div class="group">
-                        <label data-i18n="prompt">Prompt</label>
-                        <textarea id="image-prompt" placeholder="Describe your image..."></textarea>
-                    </div>
-                    <div class="group">
-                        <label data-i18n="negative">Negative Prompt</label>
-                        <textarea id="image-neg" placeholder="What to avoid..." style="min-height:60px"></textarea>
-                    </div>
-                    <div class="check">
-                        <input type="checkbox" id="image-enhance">
-                        <label for="image-enhance" data-i18n="enhance">Enhance Prompt</label>
-                    </div>
-                    <div class="row">
-                        <div class="group">
-                            <label data-i18n="ratio">Aspect Ratio</label>
-                            <select id="image-ratio">
-                                <option value="1:1">1:1</option>
-                                <option value="16:9">16:9</option>
-                                <option value="9:16">9:16</option>
-                                <option value="4:3">4:3</option>
-                            </select>
-                        </div>
-                        <div class="group">
-                            <label data-i18n="model">Model</label>
-                            <select id="image-model">
-                                <option value="imagen-3.0-generate-002">Imagen 3.0</option>
-                                <option value="imagen-3.0-fast-generate-001">Imagen 3.0 Fast</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Narration -->
-                <div id="narration-tab" class="tab-content">
-                    <div class="group">
-                        <label data-i18n="mode">Mode</label>
-                        <div class="pills">
-                            <div class="pill active" onclick="setNarrMode('auto')" data-i18n="auto">Auto</div>
-                            <div class="pill" onclick="setNarrMode('manual')" data-i18n="manual">Manual</div>
-                        </div>
-                    </div>
-                    <div id="narr-auto">
-                        <div class="group">
-                            <label data-i18n="topic">Topic / Theme</label>
-                            <input type="text" id="narr-topic" placeholder="e.g. 春天的樱花...">
-                        </div>
-                        <div class="row">
-                            <div class="group">
-                                <label data-i18n="images">Images</label>
-                                <select id="narr-img-count">
-                                    <option>2</option><option selected>3</option><option>4</option><option>5</option><option>6</option>
-                                </select>
-                            </div>
-                            <div class="group">
-                                <label data-i18n="duration">Duration</label>
-                                <div class="row">
-                                    <input type="number" id="narr-dur" value="30" min="5" max="600" style="flex:1">
-                                    <select id="narr-dur-unit" onchange="onNarrDurUnitChange()" style="width:70px">
-                                        <option value="s">sec</option>
-                                        <option value="m">min</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="group">
-                                <label data-i18n="ttsEngine">TTS Engine</label>
-                                <select id="narr-engine" onchange="onNarrEngineChange()">
-                                    <option value="mimo">MiMo (Free)</option>
-                                    <option value="gemini">Gemini (Emotional)</option>
-                                </select>
-                            </div>
-                            <div class="group">
-                                <label data-i18n="voice">Voice</label>
-                                <select id="narr-voice">
-                                    <option value="mimo_default">MiMo Default</option>
-                                    <option value="default_zh">Chinese Female</option>
-                                    <option value="default_en">English Female</option>
-                                </select>
-                            </div>
-                        </div>
-                        <button class="gen-btn" onclick="autoNarrate()" data-i18n="oneClickGenerate">🚀 One-Click Generate</button>
-                    </div>
-                    <div id="narr-manual" style="display:none">
-                        <div class="group">
-                            <label data-i18n="uploadText">Upload Images</label>
-                            <input type="file" id="narr-imgs" multiple accept="image/*" onchange="onNarrImgs(event)">
-                            <div id="narr-img-list" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"></div>
-                        </div>
-                        <div class="group">
-                            <label data-i18n="narrationText">Narration Text</label>
-                            <textarea id="narr-text" placeholder="Enter your narration..."></textarea>
-                            <div class="hint" id="narr-hint">0 chars</div>
-                        </div>
-                        <button class="gen-btn" onclick="manualNarrate()" data-i18n="generateVideo">Generate Video</button>
-                    </div>
-                    <div class="progress" id="narr-progress">
-                        <div class="progress-text" id="narr-prog-text">...</div>
-                        <div class="bar"><div class="bar-fill" id="narr-prog-bar"></div></div>
-                    </div>
-                    <div class="result" id="narr-result">
-                        <h3 data-i18n="videoGenerated">Video Generated!</h3>
-                        <video id="narr-video" controls></video>
-                        <a href="#" class="dl-btn" id="narr-dl" download data-i18n="download">Download</a>
-                    </div>
-                </div>
-
-                <!-- Templates -->
-                <div id="templates-tab" class="tab-content">
-                    <div class="group">
-                        <h3 data-i18n="promptTemplates">Prompt Templates</h3>
-                        <div id="templates-list" style="display:grid;gap:12px;margin-top:16px"></div>
-                    </div>
-                </div>
-
-                <!-- Storyboard -->
-                <div id="storyboard-tab" class="tab-content">
-                    <div class="group">
-                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-                            <h3 data-i18n="storyboardEditor">Storyboard Editor</h3>
-                            <div class="check"><input type="checkbox" id="concat-shots"><label for="concat-shots" data-i18n="concatenate">Concatenate output</label></div>
-                        </div>
-                        <div id="shots-container" style="display:flex;flex-direction:column;gap:12px"></div>
-                        <div style="display:flex;gap:8px;margin-top:16px">
-                            <button class="gen-btn" onclick="addShot()" data-i18n="addShot">+ Add Shot</button>
-                            <button class="gen-btn" onclick="addShots(5)">+ Add 5</button>
-                            <button class="gen-btn" onclick="clearShots()" data-i18n="clearAll">Clear All</button>
-                        </div>
-                        <div id="shots-cost" style="text-align:right;margin-top:8px;color:var(--text2)">0 shots · $0.00</div>
-                        <button class="gen-btn" onclick="generateStoryboard()" style="margin-top:16px" data-i18n="generateAll">Generate All Shots</button>
-                    </div>
-                    <div class="progress" id="story-progress">
-                        <div class="progress-text" id="story-prog-text">...</div>
-                        <div class="bar"><div class="bar-fill" id="story-prog-bar"></div></div>
-                    </div>
-                </div>
-
-                <!-- Dashboard -->
-                <div id="dashboard-tab" class="tab-content">
-                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px" id="stats-grid">
-                        <div class="stat-card"><div class="stat-value" id="stat-total-cost">$0.00</div><div class="stat-label" data-i18n="totalCost">Total Cost</div></div>
-                        <div class="stat-card"><div class="stat-value" id="stat-total-gen">0</div><div class="stat-label" data-i18n="generations">Generations</div></div>
-                        <div class="stat-card"><div class="stat-value" id="stat-success">0%</div><div class="stat-label" data-i18n="successRate">Success Rate</div></div>
-                        <div class="stat-card"><div class="stat-value" id="stat-time">0s</div><div class="stat-label" data-i18n="avgTime">Avg Time</div></div>
-                    </div>
-                    <div class="group">
-                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-                            <h3 data-i18n="generationHistory">Generation History</h3>
-                            <button class="gen-btn" onclick="clearHistory()" style="padding:6px 12px;font-size:12px" data-i18n="clearHistory">Clear History</button>
-                        </div>
-                        <div style="overflow-x:auto">
-                            <table style="width:100%;border-collapse:collapse;font-size:13px">
-                                <thead><tr style="border-bottom:1px solid var(--border)"><th style="text-align:left;padding:8px">Time</th><th style="text-align:left;padding:8px">Prompt</th><th style="text-align:left;padding:8px">Model</th><th style="text-align:left;padding:8px">Cost</th><th style="text-align:left;padding:8px">Status</th></tr></thead>
-                                <tbody id="history-body"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Reference Image -->
-                <div class="group" id="ref-group">
-                    <label data-i18n="reference">Reference Image (Optional)</label>
-                    <div class="upload" onclick="document.getElementById('ref-input').click()">
-                        <input type="file" id="ref-input" accept="image/*" onchange="onUpload(event)">
-                        <div class="upload-text" data-i18n="uploadText">Click or drag to upload</div>
-                    </div>
-                    <div class="preview" id="ref-preview"><img id="ref-img" src="" alt=""></div>
-                </div>
-
-                <button class="gen-btn" id="gen-btn" onclick="generate()" data-i18n="generate">Generate</button>
-
-                <div class="progress" id="progress">
-                    <div class="progress-text" id="prog-text">Initializing...</div>
-                    <div class="bar">
-                        <div class="bar-fill" id="prog-bar"></div>
-                    </div>
-                </div>
-
-                <div class="result" id="result">
-                    <h3 data-i18n="success">Generated Successfully</h3>
-                    <video id="result-video" controls style="display:none"></video>
-                    <img id="result-image" src="" style="display:none">
-                    <br><a href="#" class="dl-btn" id="dl-btn" download data-i18n="download">Download</a>
-                </div>
-            </div>
+        <div class="hd-actions">
+            <button class="icon-btn" onclick="toggleTheme()" title="Toggle Theme">🌓</button>
+            <button class="icon-btn" onclick="toggleLang()" title="Switch Language">🌐</button>
         </div>
     </div>
 
-    <!-- Proxy Toggle -->
-    <div class="proxy-toggle-fixed" onclick="toggleProxyPanel()">
-        <div class="proxy-dot" id="proxy-dot"></div>
-        <span id="proxy-text">Proxy ON</span>
-    </div>
-    <div class="proxy-panel" id="proxy-panel">
-        <div class="group">
-            <label>Proxy</label>
-            <div class="check">
-                <input type="checkbox" id="proxy-enabled" checked onchange="updateProxy()">
-                <label for="proxy-enabled">Enable Proxy</label>
+    <!-- Main panel -->
+    <div class="panel">
+        <!-- Tab bar -->
+        <div class="tabs-wrap">
+            <div class="tabs">
+                <div class="tab active" id="tab-short" onclick="switchTab('short')" data-i18n="tabShort">Short Video</div>
+                <div class="tab" id="tab-long" onclick="switchTab('long')" data-i18n="tabLong">Long Video</div>
+                <div class="tab" id="tab-extend" onclick="switchTab('extend')" data-i18n="tabExtend">Extend</div>
+                <div class="tab" id="tab-image" onclick="switchTab('image')" data-i18n="tabImage">Image</div>
+                <div class="tab" id="tab-narration" onclick="switchTab('narration')" data-i18n="tabNarration">🎙 Narration</div>
+                <div class="tab tab-more" id="tab-more">
+                    <span onclick="toggleMoreMenu(event)">⋯ More</span>
+                    <div class="more-menu" id="more-menu">
+                        <div class="more-item" onclick="switchTab('templates');closeMoreMenu()" data-i18n="templates">📋 Templates</div>
+                        <div class="more-item" onclick="switchTab('storyboard');closeMoreMenu()" data-i18n="storyboard">🎬 Storyboard</div>
+                        <div class="more-item" onclick="switchTab('dashboard');closeMoreMenu()" data-i18n="dashboard">📊 Dashboard</div>
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="group">
-            <label>Address</label>
-            <input type="text" id="proxy-addr" value="http://127.0.0.1:7897">
-        </div>
-        <button class="gen-btn" onclick="saveProxy()" style="margin-top:0">Save</button>
-    </div>
 
-    <!-- AI Assistant Toggle -->
-    <button class="ai-toggle" onclick="toggleAiPanel()">✨</button>
+        <div class="form-body">
 
-    <!-- AI Assistant Panel -->
-    <div class="ai-panel" id="ai-panel">
-        <div class="ai-header">
-            <h3 data-i18n="aiTitle">AI Creative Assistant</h3>
-            <button class="ai-close" onclick="toggleAiPanel()">×</button>
-        </div>
-        <div class="ai-body">
-            <div class="ai-section">
-                <div class="ai-section-title" data-i18n="style">Style</div>
-                <div class="style-chips">
-                    <div class="style-chip active" data-s="cinematic" onclick="pickStyle(this)" data-i18n="cinematic">
-                        Cinematic</div>
-                    <div class="style-chip" data-s="anime" onclick="pickStyle(this)" data-i18n="anime">Anime</div>
-                    <div class="style-chip" data-s="documentary" onclick="pickStyle(this)" data-i18n="documentary">
-                        Documentary</div>
-                    <div class="style-chip" data-s="commercial" onclick="pickStyle(this)" data-i18n="commercial">
-                        Commercial</div>
-                    <div class="style-chip" data-s="social" onclick="pickStyle(this)" data-i18n="social">Social</div>
-                    <div class="style-chip" data-s="artistic" onclick="pickStyle(this)" data-i18n="artistic">Artistic
+            <!-- ========== Short Video ========== -->
+            <div id="short-tab" class="tab-content active">
+                <div class="field">
+                    <label data-i18n="prompt">Prompt</label>
+                    <textarea id="short-prompt" placeholder="Describe your video scene in detail..."></textarea>
+                </div>
+                <div class="field">
+                    <label data-i18n="negative">Negative Prompt</label>
+                    <textarea id="short-neg" placeholder="What to avoid..." style="min-height:60px"></textarea>
+                </div>
+                <div class="check-line">
+                    <input type="checkbox" id="short-enhance">
+                    <label for="short-enhance" data-i18n="enhance">Enhance Prompt with AI</label>
+                </div>
+                <div class="row2">
+                    <div class="field">
+                        <label data-i18n="model">Model</label>
+                        <select id="short-model">
+                            <option value="veo3.1">Veo 3.1</option>
+                            <option value="veo3.1-fast">Veo 3.1 Fast</option>
+                            <option value="veo3">Veo 3</option>
+                            <option value="veo2">Veo 2</option>
+                        </select>
                     </div>
-                    <div class="style-chip" data-s="realistic" onclick="pickStyle(this)" data-i18n="realistic">Realistic
+                    <div class="field">
+                        <label data-i18n="ratio">Aspect Ratio</label>
+                        <select id="short-ratio">
+                            <option value="16:9">16:9 Landscape</option>
+                            <option value="9:16">9:16 Portrait</option>
+                        </select>
                     </div>
-                    <div class="style-chip" data-s="fantasy" onclick="pickStyle(this)" data-i18n="fantasy">Fantasy</div>
+                </div>
+                <div class="field">
+                    <label data-i18n="duration">Duration</label>
+                    <div class="pills">
+                        <div class="pill" data-v="4" onclick="pickDur(this)">4s</div>
+                        <div class="pill" data-v="6" onclick="pickDur(this)">6s</div>
+                        <div class="pill active" data-v="8" onclick="pickDur(this)">8s</div>
+                    </div>
                 </div>
             </div>
 
-            <div class="ai-section">
-                <div class="ai-section-title" data-i18n="customInstruction">Custom Instruction</div>
-                <input type="text" id="ai-instruction" placeholder="e.g. Make it more dramatic..."
-                    data-i18n-placeholder="instructionPlaceholder"
-                    style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:10px;font-size:13px;background:var(--card);color:var(--text);">
-            </div>
-
-            <div class="ai-section">
-                <div class="ai-section-title" data-i18n="aiRefImage">Reference Image</div>
-                <div class="upload" onclick="document.getElementById('ai-img-input').click()" style="padding:16px;">
-                    <input type="file" id="ai-img-input" accept="image/*" onchange="onAiUpload(event)">
-                    <div class="upload-text" style="font-size:12px;" data-i18n="aiUpload">Click to upload</div>
+            <!-- ========== Long Video ========== -->
+            <div id="long-tab" class="tab-content">
+                <div class="field">
+                    <label data-i18n="prompt">Prompt</label>
+                    <textarea id="long-prompt" placeholder="Describe your full video scene..."></textarea>
                 </div>
-                <div class="preview" id="ai-preview"><img id="ai-img" src="" alt=""></div>
-            </div>
-
-            <div class="ai-section">
-                <button class="ai-btn" onclick="analyzeImage()" id="btn-analyze">
-                    <span>🔍</span> <span data-i18n="analyzeImage">Analyze Image</span>
-                </button>
-                <button class="ai-btn" onclick="refinePrompt()" id="btn-refine">
-                    <span>✨</span> <span data-i18n="refinePrompt">Refine Prompt</span>
-                </button>
-            </div>
-
-            <div class="ai-result" id="ai-result"></div>
-
-            <div class="ai-section" style="border-top:1px solid var(--border);padding-top:16px;margin-top:16px;">
-                <div class="ai-section-title" data-i18n="geminiModel">Gemini Model</div>
-                <select id="ai-gemini-model"
-                    style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:10px;font-size:13px;background:var(--card);color:var(--text);">
-                    <optgroup label="Gemini 2.5 (Stable)">
-                        <option value="gemini-2.5-pro">2.5 Pro</option>
-                        <option value="gemini-2.5-flash" selected>2.5 Flash</option>
-                        <option value="gemini-2.5-flash-lite">2.5 Flash Lite</option>
-                    </optgroup>
-                    <optgroup label="Gemini 2.0">
-                        <option value="gemini-2.0-flash-001">2.0 Flash</option>
-                        <option value="gemini-2.0-flash-lite-001">2.0 Flash Lite</option>
-                    </optgroup>
-                </select>
-            </div>
-
-            <div class="ai-section" style="border-top:1px solid var(--border);padding-top:16px;margin-top:16px;">
-                <div class="ai-section-title" data-i18n="chatWithGemini">Chat with Gemini</div>
-                <div class="ai-chat">
-                    <input type="text" id="chat-input" placeholder="Ask for creative ideas..."
-                        data-i18n-placeholder="chatPlaceholder" onkeydown="if(event.key==='Enter')chatSend()">
-                    <button onclick="chatSend()" data-i18n="send">Send</button>
+                <div class="field">
+                    <label data-i18n="negative">Negative Prompt</label>
+                    <textarea id="long-neg" placeholder="What to avoid..." style="min-height:60px"></textarea>
                 </div>
-                <div class="ai-reply" id="chat-reply"></div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // I18n
-        const i18n = {
-            en: {
-                title: 'Veo Flow', subtitle: 'AI Video & Image Generation',
-                tabShort: 'Short Video', tabLong: 'Long Video', tabExtend: 'Extend Video', tabImage: 'Image',
-                prompt: 'Prompt', negative: 'Negative Prompt', enhance: 'Enhance Prompt',
-                model: 'Model', duration: 'Duration', ratio: 'Aspect Ratio',
-                totalDuration: 'Total Duration (s)', splitHint: 'Split into 8s segments',
-                reference: 'Reference Image (Optional)', uploadText: 'Click or drag to upload',
-                generate: 'Generate', success: 'Generated Successfully', download: 'Download',
-                aiTitle: 'AI Creative Assistant', style: 'Style', customInstruction: 'Custom Instruction',
-                aiRefImage: 'Reference Image', aiUpload: 'Click to upload',
-                analyzeImage: 'Analyze Image', refinePrompt: 'Refine Prompt',
-                chatWithGemini: 'Chat with Gemini', send: 'Send', geminiModel: 'Gemini Model',
-                usePrompt: 'Use This Prompt', useFull: 'Use Full Reply',
-                costConfirmTitle: 'Cost Estimate', costConfirmText: 'Estimated cost',
-                cinematic: 'Cinematic', anime: 'Anime', documentary: 'Documentary',
-                commercial: 'Commercial', social: 'Social', artistic: 'Artistic',
-                realistic: 'Realistic', fantasy: 'Fantasy',
-                instructionPlaceholder: 'e.g. Make it more dramatic...',
-                chatPlaceholder: 'Ask for creative ideas...',
-                extendDesc: 'Extend an existing video using its last frame or the full video as reference',
-                sourceVideo: 'Source Video or Last Frame',
-                uploadVideoOrImage: 'Upload video (MP4) or last frame (JPG/PNG)',
-                extensionDuration: 'Extension Duration',
-                // New features
-                templates: 'Templates',
-                storyboard: 'Storyboard',
-                dashboard: 'Dashboard',
-                narration: 'Narration',
-                mode: 'Mode',
-                auto: 'Auto',
-                manual: 'Manual',
-                topic: 'Topic',
-                images: 'Images',
-                ttsEngine: 'TTS Engine',
-                voice: 'Voice',
-                narrationText: 'Narration Text',
-                oneClickGenerate: 'One-Click Generate',
-                generateVideo: 'Generate Video',
-                promptTemplates: 'Prompt Templates',
-                storyboardEditor: 'Storyboard Editor',
-                concatenate: 'Concatenate',
-                addShot: 'Add Shot',
-                clearAll: 'Clear All',
-                generateAll: 'Generate All',
-                generationHistory: 'Generation History',
-                clearHistory: 'Clear History',
-                totalCost: 'Total Cost',
-                generations: 'Generations',
-                successRate: 'Success Rate',
-                avgTime: 'Avg Time',
-                videoGenerated: 'Video Generated'
-            },
-            zh: {
-                title: 'Veo Flow', subtitle: 'AI 视频与图像生成',
-                tabShort: '短视频', tabLong: '长视频', tabExtend: '延长视频', tabImage: '图像',
-                prompt: '提示词', negative: '负面提示词', enhance: '增强提示词',
-                model: '模型', duration: '时长', ratio: '宽高比',
-                totalDuration: '总时长 (秒)', splitHint: '分割为 8 秒片段',
-                reference: '参考图 (可选)', uploadText: '点击或拖拽上传',
-                generate: '生成', success: '生成成功', download: '下载',
-                aiTitle: 'AI 创意助手', style: '风格', customInstruction: '自定义指令',
-                aiRefImage: '参考图', aiUpload: '点击上传',
-                analyzeImage: '分析图像', refinePrompt: '优化提示词',
-                chatWithGemini: '与 Gemini 对话', send: '发送', geminiModel: 'Gemini 模型',
-                usePrompt: '使用此提示词', useFull: '使用完整回复',
-                costConfirmTitle: '费用预估', costConfirmText: '预估费用',
-                cinematic: '电影感', anime: '动漫', documentary: '纪录片',
-                commercial: '商业广告', social: '社交媒体', artistic: '艺术',
-                realistic: '写实', fantasy: '奇幻',
-                instructionPlaceholder: '例如：让它更有戏剧性...',
-                chatPlaceholder: '询问创意建议...',
-                extendDesc: '使用视频或最后一帧作为参考来延长现有视频',
-                sourceVideo: '源视频或最后一帧',
-                uploadVideoOrImage: '上传视频 (MP4) 或最后一帧 (JPG/PNG)',
-                extensionDuration: '延长时长',
-                // New features
-                templates: '模板',
-                storyboard: '分镜',
-                dashboard: '统计',
-                narration: '文配视频',
-                mode: '模式',
-                auto: '自动',
-                manual: '手动',
-                topic: '主题',
-                images: '图片数量',
-                ttsEngine: '语音引擎',
-                voice: '音色',
-                narrationText: '旁白文本',
-                oneClickGenerate: '一键生成',
-                generateVideo: '生成视频',
-                promptTemplates: '提示词模板',
-                storyboardEditor: '分镜编辑器',
-                concatenate: '合并输出',
-                addShot: '添加镜头',
-                clearAll: '清空全部',
-                generateAll: '生成全部镜头',
-                generationHistory: '生成历史',
-                clearHistory: '清空历史',
-                totalCost: '总费用',
-                generations: '生成次数',
-                successRate: '成功率',
-                avgTime: '平均时间',
-                videoGenerated: '视频生成成功'
-            }
-        };
-        let lang = 'en';
-        function toggleLang() {
-            lang = lang === 'en' ? 'zh' : 'en';
-            document.querySelectorAll('[data-i18n]').forEach(el => {
-                const key = el.dataset.i18n;
-                if (i18n[lang][key]) el.textContent = i18n[lang][key];
-            });
-            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
-                const key = el.dataset.i18nPlaceholder;
-                if (i18n[lang][key]) el.placeholder = i18n[lang][key];
-            });
-        }
-
-        // Theme
-        function toggleTheme() {
-            const theme = document.body.dataset.theme === 'dark' ? 'light' : 'dark';
-            document.body.dataset.theme = theme;
-            localStorage.setItem('theme', theme);
-        }
-        // Load saved theme
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme) document.body.dataset.theme = savedTheme;
-
-        // State
-        const API = '';
-        let dur = 8, extendDur = 8, mode = 'short', taskId = null, pollTimer = null, aiStyle = 'cinematic';
-        let extendFile = null, extendFileType = null;
-
-        // Tabs
-        function switchTab(m, el) {
-            mode = m;
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            el.classList.add('active');
-            document.getElementById(m + '-tab').classList.add('active');
-            
-            // Hide shared elements for templates/storyboard/dashboard
-            const sharedElements = ['ref-group', 'gen-btn', 'progress', 'result'];
-            const hideShared = ['templates', 'storyboard', 'dashboard'].includes(m);
-            sharedElements.forEach(id => {
-                document.getElementById(id).style.display = hideShared ? 'none' : 'block';
-            });
-            
-            if (!hideShared) {
-                document.getElementById('ref-group').style.display = (m === 'image' || m === 'extend') ? 'none' : 'block';
-                const btnText = m === 'image' ? (lang === 'zh' ? '生成图像' : 'Generate Image') : m === 'extend' ? (lang === 'zh' ? '延长视频' : 'Extend Video') : m === 'narration' ? '🚀 ' + (lang === 'zh' ? '一键生成' : 'One-Click') : (lang === 'zh' ? '生成视频' : 'Generate Video');
-                document.getElementById('gen-btn').textContent = btnText;
-            }
-            
-            // Load data for specific tabs
-            if (m === 'templates') loadTemplates();
-            if (m === 'dashboard') loadDashboard();
-        }
-
-        // Pills
-        function pickDur(el) {
-            document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
-            el.classList.add('active');
-            dur = el.dataset.v;
-        }
-        function pickExtendDur(el) {
-            document.querySelectorAll('#extend-tab .pill').forEach(p => p.classList.remove('active'));
-            el.classList.add('active');
-            extendDur = el.dataset.v;
-        }
-
-        // Upload
-        function onUpload(e) {
-            const f = e.target.files[0];
-            if (!f) return;
-            const r = new FileReader();
-            r.onload = ev => { document.getElementById('ref-img').src = ev.target.result; document.getElementById('ref-preview').classList.add('show'); };
-            r.readAsDataURL(f);
-        }
-        function onAiUpload(e) {
-            const f = e.target.files[0];
-            if (!f) return;
-            const r = new FileReader();
-            r.onload = ev => { document.getElementById('ai-img').src = ev.target.result; document.getElementById('ai-preview').classList.add('show'); };
-            r.readAsDataURL(f);
-        }
-        function onExtendUpload(e) {
-            const f = e.target.files[0];
-            if (!f) return;
-            extendFile = f;
-            extendFileType = f.type.startsWith('video') ? 'video' : 'image';
-            const preview = document.getElementById('extend-preview');
-            const vid = document.getElementById('extend-video-preview');
-            const img = document.getElementById('extend-img-preview');
-            preview.classList.add('show');
-            if (extendFileType === 'video') {
-                vid.style.display = 'block';
-                img.style.display = 'none';
-                vid.src = URL.createObjectURL(f);
-            } else {
-                vid.style.display = 'none';
-                img.style.display = 'block';
-                const r = new FileReader();
-                r.onload = ev => { img.src = ev.target.result; };
-                r.readAsDataURL(f);
-            }
-        }
-
-        // Style
-        function pickStyle(el) {
-            document.querySelectorAll('.style-chip').forEach(c => c.classList.remove('active'));
-            el.classList.add('active');
-            aiStyle = el.dataset.s;
-        }
-
-        // AI Panel
-        function toggleAiPanel() {
-            document.getElementById('ai-panel').classList.toggle('show');
-        }
-
-        // Proxy
-        function toggleProxyPanel() {
-            document.getElementById('proxy-panel').classList.toggle('show');
-        }
-        function updateProxy() {
-            const enabled = document.getElementById('proxy-enabled').checked;
-            document.getElementById('proxy-dot').classList.toggle('off', !enabled);
-            document.getElementById('proxy-text').textContent = enabled ? 'Proxy ON' : 'Proxy OFF';
-        }
-        async function saveProxy() {
-            const enabled = document.getElementById('proxy-enabled').checked;
-            const addr = document.getElementById('proxy-addr').value.trim();
-            try {
-                await fetch(`${API}/api/proxy`, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ enabled, address: addr })
-                });
-                document.getElementById('proxy-panel').classList.remove('show');
-            } catch (e) { alert('Save failed'); }
-        }
-
-        // Get Gemini Model
-        function getGeminiModel() {
-            const el = document.getElementById('ai-gemini-model');
-            return el ? el.value : 'gemini-3.1-pro-preview';
-        }
-
-        // AI Functions
-        async function analyzeImage() {
-            const inp = document.getElementById('ai-img-input');
-            if (!inp.files.length) { alert('Please upload an image'); return; }
-            const btn = document.getElementById('btn-analyze');
-            btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Analyzing...';
-            const resultEl = document.getElementById('ai-result');
-            resultEl.classList.remove('show');
-            try {
-                const fd = new FormData();
-                fd.append('image', inp.files[0]);
-                fd.append('style', aiStyle);
-                fd.append('target', mode === 'image' ? 'image' : 'video');
-                fd.append('instruction', document.getElementById('ai-instruction').value);
-                fd.append('gemini_model', getGeminiModel());
-                const r = await fetch(`${API}/api/analyze-image`, { method: 'POST', body: fd });
-                const d = await r.json();
-                if (d.error) throw new Error(d.error);
-                let html = '';
-                if (d.description) html += `<div class="label">Description</div><div class="value">${d.description}</div>`;
-                if (d.prompt) html += `<div class="label">Generated Prompt</div><div class="value">${d.prompt}</div>`;
-                if (d.negative_prompt) html += `<div class="label">Negative</div><div class="value">${d.negative_prompt}</div>`;
-                html += `<button class="ai-use-btn" onclick="useAiResult('${encodeURIComponent(d.prompt || '')}', '${encodeURIComponent(d.negative_prompt || '')}')">Use This Prompt</button>`;
-                resultEl.innerHTML = html;
-                resultEl.classList.add('show');
-            } catch (e) { alert('Error: ' + e.message); }
-            btn.disabled = false; btn.innerHTML = '<span>🔍</span> Analyze Image';
-        }
-
-        async function refinePrompt() {
-            const prompt = document.getElementById(mode + '-prompt').value.trim();
-            if (!prompt) { alert('Please enter a prompt first'); return; }
-            const btn = document.getElementById('btn-refine');
-            btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Refining...';
-            const resultEl = document.getElementById('ai-result');
-            resultEl.classList.remove('show');
-            try {
-                const r = await fetch(`${API}/api/refine-prompt`, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ prompt, target: mode === 'image' ? 'image' : 'video', style: aiStyle, gemini_model: getGeminiModel() })
-                });
-                const d = await r.json();
-                if (d.error) throw new Error(d.error);
-                let html = '';
-                if (d.changes) html += `<div class="label">Changes</div><div class="value">${d.changes}</div>`;
-                if (d.prompt) html += `<div class="label">Refined Prompt</div><div class="value">${d.prompt}</div>`;
-                if (d.negative_prompt) html += `<div class="label">Negative</div><div class="value">${d.negative_prompt}</div>`;
-                html += `<button class="ai-use-btn" onclick="useAiResult('${encodeURIComponent(d.prompt || '')}', '${encodeURIComponent(d.negative_prompt || '')}')">Use This Prompt</button>`;
-                resultEl.innerHTML = html;
-                resultEl.classList.add('show');
-            } catch (e) { alert('Error: ' + e.message); }
-            btn.disabled = false; btn.innerHTML = '<span>✨</span> Refine Prompt';
-        }
-
-        function useAiResult(prompt, neg) {
-            document.getElementById(mode + '-prompt').value = decodeURIComponent(prompt);
-            if (neg) document.getElementById(mode + '-neg').value = decodeURIComponent(neg);
-            toggleAiPanel();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        async function chatSend() {
-            const inp = document.getElementById('chat-input');
-            const msg = inp.value.trim();
-            if (!msg) return;
-            inp.value = '';
-            const reply = document.getElementById('chat-reply');
-            reply.classList.add('show');
-            reply.innerHTML = '<span class="spinner"></span> Thinking...';
-            try {
-                const ctx = `Mode: ${mode}, Style: ${aiStyle}`;
-                const r = await fetch(`${API}/api/chat`, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: msg, context: ctx, gemini_model: getGeminiModel() })
-                });
-                const d = await r.json();
-                if (d.error) throw new Error(d.error);
-                const text = d.reply || 'No response';
-                // 提取提示词（假设 AI 回复中包含提示词）
-                const promptMatch = text.match(/(?:prompt|提示词)[:\s]*([^\n]+)/i);
-                const extractedPrompt = promptMatch ? promptMatch[1].trim() : '';
-                let html = text.replace(/\n/g, '<br>');
-                // 添加使用按钮
-                html += '<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">';
-                if (extractedPrompt) {
-                    html += `<button class="ai-use-btn" onclick="useChatPrompt('${encodeURIComponent(extractedPrompt)}')" data-i18n="usePrompt">Use This Prompt</button>`;
-                }
-                html += `<button class="ai-use-btn" onclick="useChatFull('${encodeURIComponent(text)}')" style="background:var(--text2);margin-top:8px;" data-i18n="useFull">Use Full Reply</button>`;
-                html += '</div>';
-                reply.innerHTML = html;
-            } catch (e) { reply.innerHTML = 'Error: ' + e.message; }
-        }
-
-        function useChatPrompt(prompt) {
-            document.getElementById(mode + '-prompt').value = decodeURIComponent(prompt);
-            toggleAiPanel();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        function useChatFull(text) {
-            // 清理文本，去掉 markdown 等
-            const clean = decodeURIComponent(text).replace(/<br>/g, '\n').replace(/<[^>]+>/g, '');
-            document.getElementById(mode + '-prompt').value = clean.substring(0, 500);
-            toggleAiPanel();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        // Cost Estimate
-        const PRICES = {
-            'veo3.1': 0.40, 'veo3.1-fast': 0.20,
-            'veo3': 0.40, 'veo3-fast': 0.40,
-            'veo2': 0.50,
-            'imagen-3.0-generate-002': 0.04, 'imagen-3.0-fast-generate-001': 0.02
-        };
-
-        function estimateCost() {
-            let model, seconds, isImage = false;
-            if (mode === 'image') {
-                model = document.getElementById('image-model').value;
-                isImage = true;
-            } else if (mode === 'long') {
-                model = document.getElementById('long-model').value;
-                seconds = parseInt(document.getElementById('long-time').value) || 60;
-            } else if (mode === 'extend') {
-                model = document.getElementById('extend-model').value;
-                seconds = extendDur;
-            } else {
-                model = document.getElementById('short-model').value;
-                seconds = dur;
-            }
-            const price = PRICES[model] || 0.40;
-            if (isImage) {
-                return { cost: price, text: `$${price.toFixed(2)}` };
-            }
-            const cost = price * seconds;
-            return { cost, text: `$${cost.toFixed(2)} (${seconds}s × $${price}/s)` };
-        }
-
-        function showCostConfirm() {
-            const est = estimateCost();
-            const msg = lang === 'zh'
-                ? `预估费用: ${est.text}\n\n⚠️ 计费提醒：\nGoogle Cloud 严格按照【实际生成的视频秒数】计费。\n只要点击确认，生成任务就会在服务器后台运行，此时关闭浏览器或刷新页面【不会终止任务】，并且依然会产生全额费用！\n\n确定要生成吗？`
-                : `Estimated cost: ${est.text}\n\n⚠️ BILLING REMINDER:\nGoogle Cloud bills strictly per second of generated video.\nOnce confirmed, the task runs in the server background. Closing your browser or refreshing the page WILL NOT stop the task and you will still be billed!\n\nContinue?`;
-            return confirm(msg);
-        }
-
-        // Generate
-        let isSubmitting = false;
-
-        async function generate() {
-            if (isSubmitting) {
-                alert(lang === 'zh' ? '正在提交中，请稍候...' : 'Submitting, please wait...');
-                return;
-            }
-
-            if (!showCostConfirm()) return;
-
-            isSubmitting = true;
-            const btn = document.getElementById('gen-btn'), prog = document.getElementById('progress'), result = document.getElementById('result');
-            btn.disabled = true;
-            btn.textContent = lang === 'zh' ? '提交中...' : 'Submitting...';
-
-            let prompt, neg, enhance, model, ratio;
-            if (mode === 'image') {
-                prompt = document.getElementById('image-prompt').value; neg = document.getElementById('image-neg').value;
-                enhance = document.getElementById('image-enhance').checked; model = document.getElementById('image-model').value; ratio = document.getElementById('image-ratio').value;
-            } else if (mode === 'long') {
-                prompt = document.getElementById('long-prompt').value; neg = document.getElementById('long-neg').value;
-                enhance = document.getElementById('long-enhance').checked; model = document.getElementById('long-model').value; ratio = document.getElementById('long-ratio').value;
-            } else if (mode === 'extend') {
-                prompt = document.getElementById('extend-prompt').value; neg = document.getElementById('extend-neg').value;
-                enhance = document.getElementById('extend-enhance').checked; model = document.getElementById('extend-model').value; ratio = document.getElementById('extend-ratio').value;
-                if (!extendFile) { alert(lang === 'zh' ? '请上传视频或最后一帧' : 'Please upload video or last frame'); isSubmitting = false; btn.disabled = false; btn.textContent = lang === 'zh' ? '生成' : 'Generate'; return; }
-            } else {
-                prompt = document.getElementById('short-prompt').value; neg = document.getElementById('short-neg').value;
-                enhance = document.getElementById('short-enhance').checked; model = document.getElementById('short-model').value; ratio = document.getElementById('short-ratio').value;
-            }
-            if (!prompt.trim()) { alert(lang === 'zh' ? '请输入提示词' : 'Please enter a prompt'); isSubmitting = false; btn.disabled = false; btn.textContent = lang === 'zh' ? '生成' : 'Generate'; return; }
-
-            prog.classList.add('show'); result.classList.remove('show');
-            document.getElementById('prog-text').textContent = 'Submitting...'; document.getElementById('prog-bar').style.width = '5%';
-            document.getElementById('prog-text').textContent = 'Submitting...'; document.getElementById('prog-bar').style.width = '5%';
-            try {
-                let r, d;
-                if (mode === 'extend') {
-                    const fd = new FormData();
-                    fd.append('prompt', prompt); fd.append('negative_prompt', neg);
-                    fd.append('enhance_prompt', enhance); fd.append('model', model); fd.append('ratio', ratio);
-                    fd.append('duration', extendDur);
-                    if (extendFileType === 'video') fd.append('video', extendFile);
-                    else fd.append('last_frame', extendFile);
-                    r = await fetch(`${API}/api/extend`, { method: 'POST', body: fd });
-                    d = await r.json();
-                } else {
-                    const fd = new FormData();
-                    fd.append('mode', mode); fd.append('prompt', prompt); fd.append('negative_prompt', neg);
-                    fd.append('enhance_prompt', enhance); fd.append('model', model); fd.append('ratio', ratio);
-                    if (mode === 'long') fd.append('total_seconds', document.getElementById('long-time').value);
-                    else if (mode === 'short') fd.append('duration', dur);
-                    const img = document.getElementById('ref-input');
-                    if (img.files.length) fd.append('image', img.files[0]);
-                    r = await fetch(`${API}/api/generate`, { method: 'POST', body: fd });
-                    d = await r.json();
-                }
-                if (d.error) throw new Error(d.error);
-                taskId = d.task_id; document.getElementById('prog-text').textContent = 'Task created...'; document.getElementById('prog-bar').style.width = '10%';
-                pollTimer = setInterval(checkStatus, 2000);
-            } catch (e) {
-                alert('Error: ' + e.message);
-                isSubmitting = false;
-                btn.disabled = false;
-                btn.textContent = mode === 'image' ? (lang === 'zh' ? '生成图像' : 'Generate Image') : mode === 'extend' ? (lang === 'zh' ? '延长视频' : 'Extend Video') : (lang === 'zh' ? '生成' : 'Generate');
-                prog.classList.remove('show');
-            }
-        }
-
-        async function checkStatus() {
-            if (!taskId) return;
-            try {
-                const r = await fetch(`${API}/api/task/${taskId}`); const d = await r.json();
-                document.getElementById('prog-text').textContent = d.message;
-                document.getElementById('prog-bar').style.width = d.progress + '%';
-                if (d.status === 'completed') {
-                    clearInterval(pollTimer); isSubmitting = false;
-                    const btn = document.getElementById('gen-btn'); btn.disabled = false;
-                    btn.textContent = mode === 'image' ? (lang === 'zh' ? '生成图像' : 'Generate Image') : mode === 'extend' ? (lang === 'zh' ? '延长视频' : 'Extend Video') : (lang === 'zh' ? '生成' : 'Generate');
-                    document.getElementById('progress').classList.remove('show');
-                    const result = document.getElementById('result'); result.classList.add('show');
-                    const vid = document.getElementById('result-video'), img = document.getElementById('result-image'), dl = document.getElementById('dl-btn');
-                    if (mode === 'image') { vid.style.display = 'none'; img.style.display = 'block'; img.src = d.output_url; dl.href = d.output_url; dl.textContent = lang === 'zh' ? '下载图像' : 'Download Image'; }
-                    else { img.style.display = 'none'; vid.style.display = 'block'; vid.src = d.output_url; dl.href = d.output_url; dl.textContent = lang === 'zh' ? '下载视频' : 'Download Video'; }
-                } else if (d.status === 'error') { clearInterval(pollTimer); isSubmitting = false; const btn = document.getElementById('gen-btn'); btn.disabled = false; btn.textContent = mode === 'image' ? (lang === 'zh' ? '生成图像' : 'Generate Image') : mode === 'extend' ? (lang === 'zh' ? '延长视频' : 'Extend Video') : (lang === 'zh' ? '生成' : 'Generate'); document.getElementById('progress').classList.remove('show'); alert('Failed: ' + d.message); }
-            } catch (e) { console.error(e); }
-        }
-
-        // ========== Narration ==========
-        let narrMode = 'auto', narrImages = [];
-
-        function setNarrMode(m) {
-            narrMode = m;
-            document.querySelectorAll('#narration-tab .pill').forEach(p => p.classList.remove('active'));
-            event.target.classList.add('active');
-            document.getElementById('narr-auto').style.display = m === 'auto' ? 'block' : 'none';
-            document.getElementById('narr-manual').style.display = m === 'manual' ? 'block' : 'none';
-        }
-
-        function onNarrEngineChange() {
-            const engine = document.getElementById('narr-engine').value;
-            const sel = document.getElementById('narr-voice');
-            sel.innerHTML = engine === 'gemini' 
-                ? '<option>Kore</option><option>Puck</option><option>Charon</option><option>Fenrir</option><option>Leda</option>'
-                : '<option value="mimo_default">MiMo Default</option><option value="default_zh">Chinese Female</option><option value="default_en">English Female</option>';
-        }
-
-        function onNarrDurUnitChange() {
-            const unit = document.getElementById('narr-dur-unit').value;
-            const input = document.getElementById('narr-dur');
-            if (unit === 'm') {
-                input.value = Math.round((parseInt(input.value) || 30) / 60) || 1;
-                input.min = 1; input.max = 10;
-            } else {
-                input.value = (parseInt(input.value) || 1) * 60;
-                input.min = 5; input.max = 600;
-            }
-        }
-
-        function getNarrDurSec() {
-            const val = parseInt(document.getElementById('narr-dur').value) || 30;
-            return document.getElementById('narr-dur-unit').value === 'm' ? val * 60 : val;
-        }
-
-        async function autoNarrate() {
-            const topic = document.getElementById('narr-topic').value.trim();
-            if (!topic) return alert('Please enter a topic');
-
-            document.getElementById('narr-progress').classList.add('show');
-            document.getElementById('narr-result').classList.remove('show');
-
-            const durSec = getNarrDurSec();
-            const imgCount = parseInt(document.getElementById('narr-img-count').value);
-            const engine = document.getElementById('narr-engine').value;
-            const voice = document.getElementById('narr-voice').value;
-
-            try {
-                document.getElementById('narr-prog-text').textContent = 'Step 1/3: AI generating text...';
-                document.getElementById('narr-prog-bar').style.width = '10%';
-
-                const textRes = await fetch(`${API}/api/narration/auto`, {
-                    method: 'POST', headers: {'Content-Type':'application/json'},
-                    body: JSON.stringify({topic, image_count: imgCount, duration: durSec})
-                });
-                const textData = await textRes.json();
-                if (textData.error) throw new Error(textData.error);
-
-                document.getElementById('narr-prog-bar').style.width = '30%';
-
-                const prompts = textData.image_prompts || [];
-                const generatedImages = [];
-                for (let i = 0; i < prompts.length; i++) {
-                    document.getElementById('narr-prog-text').textContent = `Step 2/3: Generating image ${i+1}/${prompts.length}...`;
-                    document.getElementById('narr-prog-bar').style.width = (30 + (i+1)/prompts.length*30) + '%';
-                    const imgRes = await fetch(`${API}/api/narration/ai-image`, {
-                        method: 'POST', headers: {'Content-Type':'application/json'},
-                        body: JSON.stringify({prompt: prompts[i]})
-                    });
-                    const imgData = await imgRes.json();
-                    if (!imgData.error) generatedImages.push(imgData.filename);
-                }
-                if (generatedImages.length === 0) throw new Error('Failed to generate images');
-
-                document.getElementById('narr-prog-text').textContent = 'Step 3/3: Generating audio & video...';
-                document.getElementById('narr-prog-bar').style.width = '70%';
-
-                const narRes = await fetch(`${API}/api/narration`, {
-                    method: 'POST', headers: {'Content-Type':'application/json'},
-                    body: JSON.stringify({text: textData.text, images: generatedImages, voice, engine})
-                });
-                const narData = await narRes.json();
-                if (narData.error) throw new Error(narData.error);
-
-                document.getElementById('narr-prog-bar').style.width = '100%';
-                document.getElementById('narr-progress').classList.remove('show');
-                document.getElementById('narr-result').classList.add('show');
-                document.getElementById('narr-video').src = narData.video_url;
-                document.getElementById('narr-dl').href = narData.video_url;
-            } catch (e) {
-                alert('Error: ' + e.message);
-                document.getElementById('narr-progress').classList.remove('show');
-            }
-        }
-
-        function onNarrImgs(e) {
-            const files = Array.from(e.target.files);
-            const list = document.getElementById('narr-img-list');
-            list.innerHTML = '';
-            narrImages = files;
-            files.forEach(f => {
-                const reader = new FileReader();
-                reader.onload = ev => {
-                    const div = document.createElement('div');
-                    div.style.cssText = 'width:60px;height:60px;border-radius:6px;overflow:hidden;border:1px solid var(--border)';
-                    div.innerHTML = `<img src="${ev.target.result}" style="width:100%;height:100%;object-fit:cover">`;
-                    list.appendChild(div);
-                };
-                reader.readAsDataURL(f);
-            });
-        }
-
-        document.getElementById('narr-text')?.addEventListener('input', function() {
-            document.getElementById('narr-hint').textContent = this.value.length + ' chars · ~' + Math.max(5, Math.ceil(this.value.length/4.5)) + 's';
-        });
-
-        async function manualNarrate() {
-            const text = document.getElementById('narr-text').value.trim();
-            if (!text) return alert('Please enter text');
-            if (narrImages.length === 0) return alert('Please upload images');
-
-            document.getElementById('narr-progress').classList.add('show');
-            try {
-                document.getElementById('narr-prog-text').textContent = 'Uploading images...';
-                document.getElementById('narr-prog-bar').style.width = '20%';
-
-                const uploaded = [];
-                for (let i = 0; i < narrImages.length; i++) {
-                    const fd = new FormData();
-                    fd.append('image', narrImages[i]);
-                    const res = await fetch(`${API}/api/upload`, {method: 'POST', body: fd});
-                    const data = await res.json();
-                    if (data.error) throw new Error(data.error);
-                    uploaded.push(data.filename);
-                }
-
-                document.getElementById('narr-prog-text').textContent = 'Generating video...';
-                document.getElementById('narr-prog-bar').style.width = '60%';
-
-                const narRes = await fetch(`${API}/api/narration`, {
-                    method: 'POST', headers: {'Content-Type':'application/json'},
-                    body: JSON.stringify({text, images: uploaded, voice: 'mimo_default', engine: 'mimo'})
-                });
-                const narData = await narRes.json();
-                if (narData.error) throw new Error(narData.error);
-
-                document.getElementById('narr-prog-bar').style.width = '100%';
-                document.getElementById('narr-progress').classList.remove('show');
-                document.getElementById('narr-result').classList.add('show');
-                document.getElementById('narr-video').src = narData.video_url;
-                document.getElementById('narr-dl').href = narData.video_url;
-            } catch (e) {
-                alert('Error: ' + e.message);
-                document.getElementById('narr-progress').classList.remove('show');
-            }
-        }
-
-        // More menu
-        function toggleMoreMenu() {
-            const menu = document.getElementById('more-menu');
-            menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
-        }
-        function hideMoreMenu() {
-            document.getElementById('more-menu').style.display = 'none';
-        }
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.tab')) hideMoreMenu();
-        });
-
-        // ========== Templates ==========
-        async function loadTemplates() {
-            try {
-                const r = await fetch(`${API}/api/templates`);
-                const d = await r.json();
-                const list = document.getElementById('templates-list');
-                list.innerHTML = (d.categories || []).map(cat => `
-                    <div style="margin-bottom:20px">
-                        <h4 style="margin:0 0 12px 0;font-size:14px;color:var(--text)">${cat.icon} ${cat.name}</h4>
-                        <div style="display:grid;gap:8px">
-                            ${cat.templates.map(t => `
-                                <div class="template-card" onclick="useTemplate('${t.name}', '${t.prompt.replace(/'/g, "\\'")}')">
-                                    <h4 style="margin:0 0 4px 0;font-size:13px">${t.name}</h4>
-                                    <p style="margin:0;font-size:11px;color:var(--text2)">${t.prompt.substring(0, 60)}...</p>
-                                    <div style="margin-top:8px;font-size:11px;color:var(--accent)">${t.model} · ${t.duration}s · ${t.ratio}</div>
-                                </div>
-                            `).join('')}
-                        </div>
+                <div class="check-line">
+                    <input type="checkbox" id="long-enhance">
+                    <label for="long-enhance" data-i18n="enhance">Enhance Prompt with AI</label>
+                </div>
+                <div class="row2">
+                    <div class="field">
+                        <label data-i18n="totalDuration">Total Duration (seconds)</label>
+                        <input type="number" id="long-time" value="16" min="8" max="300">
+                        <div class="hint" data-i18n="splitHint">Segments of 8s, stitched by ffmpeg</div>
                     </div>
-                `).join('');
-            } catch (e) { console.error(e); }
-        }
-
-        function useTemplate(name, prompt) {
-            document.getElementById('short-prompt').value = prompt;
-            switchTab('short', document.querySelector('.tab'));
-        }
-
-        // ========== Storyboard ==========
-        let shots = [];
-        function addShot() {
-            shots.push({ id: Date.now(), prompt: '', model: 'veo3.1', duration: 8 });
-            renderShots();
-        }
-        function addShots(n) {
-            for (let i = 0; i < n; i++) addShot();
-        }
-        function clearShots() {
-            shots = [];
-            renderShots();
-        }
-        function removeShot(id) {
-            shots = shots.filter(s => s.id !== id);
-            renderShots();
-        }
-        function updateShot(id, field, value) {
-            const shot = shots.find(s => s.id === id);
-            if (shot) shot[field] = value;
-            updateStoryCost();
-        }
-        function renderShots() {
-            const container = document.getElementById('shots-container');
-            container.innerHTML = shots.map((s, i) => `
-                <div class="shot-row">
-                    <span style="font-weight:600;color:var(--text2)">${i+1}</span>
-                    <input placeholder="Shot prompt..." value="${s.prompt}" onchange="updateShot(${s.id}, 'prompt', this.value)">
-                    <select onchange="updateShot(${s.id}, 'model', this.value)">
-                        <option value="veo3.1" ${s.model==='veo3.1'?'selected':''}>veo3.1</option>
-                        <option value="veo3.1-fast" ${s.model==='veo3.1-fast'?'selected':''}>veo3.1-fast</option>
+                    <div class="field">
+                        <label data-i18n="model">Model</label>
+                        <select id="long-model">
+                            <option value="veo3.1">Veo 3.1</option>
+                            <option value="veo3.1-fast">Veo 3.1 Fast</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="field">
+                    <label data-i18n="ratio">Aspect Ratio</label>
+                    <select id="long-ratio">
+                        <option value="16:9">16:9</option>
+                        <option value="9:16">9:16</option>
                     </select>
-                    <input type="number" value="${s.duration}" min="4" max="8" onchange="updateShot(${s.id}, 'duration', parseInt(this.value))">
-                    <button onclick="removeShot(${s.id})">×</button>
                 </div>
-            `).join('');
-            updateStoryCost();
+            </div>
+
+            <!-- ========== Extend Video ========== -->
+            <div id="extend-tab" class="tab-content">
+                <div class="field">
+                    <label data-i18n="sourceVideo">Source Video or Last Frame</label>
+                    <div class="upload-zone" onclick="document.getElementById('extend-input').click()">
+                        <input type="file" id="extend-input" accept="video/*,image/*" onchange="onExtendUpload(event)">
+                        <div style="font-size:28px">📁</div>
+                        <p data-i18n="uploadVideoOrImage">Upload video (MP4) or last frame (JPG/PNG)</p>
+                    </div>
+                    <div class="upload-preview" id="extend-preview">
+                        <video id="extend-video-preview" controls style="display:none;max-height:140px;border-radius:8px;width:100%"></video>
+                        <img id="extend-img-preview" src="" style="display:none;max-height:140px;border-radius:8px">
+                    </div>
+                </div>
+                <div class="field">
+                    <label data-i18n="prompt">Prompt for Extension</label>
+                    <textarea id="extend-prompt" placeholder="Describe how the video should continue..."></textarea>
+                </div>
+                <div class="field">
+                    <label data-i18n="negative">Negative Prompt</label>
+                    <textarea id="extend-neg" placeholder="What to avoid..." style="min-height:60px"></textarea>
+                </div>
+                <div class="check-line">
+                    <input type="checkbox" id="extend-enhance">
+                    <label for="extend-enhance" data-i18n="enhance">Enhance Prompt with AI</label>
+                </div>
+                <div class="row2">
+                    <div class="field">
+                        <label data-i18n="model">Model</label>
+                        <select id="extend-model">
+                            <option value="veo3.1">Veo 3.1</option>
+                            <option value="veo3.1-fast">Veo 3.1 Fast</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label data-i18n="ratio">Aspect Ratio</label>
+                        <select id="extend-ratio">
+                            <option value="16:9">16:9</option>
+                            <option value="9:16">9:16</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="field">
+                    <label data-i18n="duration">Extension Duration</label>
+                    <div class="pills">
+                        <div class="pill" data-v="4" onclick="pickExtendDur(this)">4s</div>
+                        <div class="pill active" data-v="8" onclick="pickExtendDur(this)">8s</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== Image ========== -->
+            <div id="image-tab" class="tab-content">
+                <div class="field">
+                    <label data-i18n="prompt">Prompt</label>
+                    <textarea id="image-prompt" placeholder="Describe your image..."></textarea>
+                </div>
+                <div class="field">
+                    <label data-i18n="negative">Negative Prompt</label>
+                    <textarea id="image-neg" placeholder="What to avoid..." style="min-height:60px"></textarea>
+                </div>
+                <div class="check-line">
+                    <input type="checkbox" id="image-enhance">
+                    <label for="image-enhance" data-i18n="enhance">Enhance Prompt with AI</label>
+                </div>
+                <div class="row2">
+                    <div class="field">
+                        <label data-i18n="model">Model</label>
+                        <select id="image-model">
+                            <option value="imagen-3.0-generate-002">Imagen 3.0</option>
+                            <option value="imagen-3.0-fast-generate-001">Imagen 3.0 Fast</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label data-i18n="ratio">Aspect Ratio</label>
+                        <select id="image-ratio">
+                            <option value="1:1">1:1 Square</option>
+                            <option value="16:9">16:9 Landscape</option>
+                            <option value="9:16">9:16 Portrait</option>
+                            <option value="4:3">4:3</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== Narration ========== -->
+            <div id="narration-tab" class="tab-content">
+                <div class="field">
+                    <label data-i18n="mode">Mode</label>
+                    <div class="pills">
+                        <div class="pill active" onclick="setNarrMode('auto',this)" data-i18n="auto">Auto</div>
+                        <div class="pill" onclick="setNarrMode('manual',this)" data-i18n="manual">Manual</div>
+                    </div>
+                </div>
+
+                <!-- Auto mode -->
+                <div id="narr-auto">
+                    <div class="field">
+                        <label data-i18n="topic">Topic / Theme</label>
+                        <input type="text" id="narr-topic" placeholder="e.g. 春天的樱花、Ocean sunset...">
+                    </div>
+                    <div class="row2">
+                        <div class="field">
+                            <label data-i18n="images">Number of Images</label>
+                            <select id="narr-img-count">
+                                <option>2</option><option selected>3</option>
+                                <option>4</option><option>5</option><option>6</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label data-i18n="duration">Duration</label>
+                            <div style="display:flex;gap:6px">
+                                <input type="number" id="narr-dur" value="30" min="5" max="600" style="flex:1">
+                                <select id="narr-dur-unit" onchange="onNarrDurUnitChange()" style="width:68px">
+                                    <option value="s">sec</option>
+                                    <option value="m">min</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row2">
+                        <div class="field">
+                            <label data-i18n="ttsEngine">TTS Engine</label>
+                            <select id="narr-engine" onchange="onNarrEngineChange()">
+                                <option value="mimo">MiMo / gTTS (Free)</option>
+                                <option value="gemini">Google Cloud TTS</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label data-i18n="voice">Voice</label>
+                            <select id="narr-voice">
+                                <option value="mimo_default">MiMo Default</option>
+                                <option value="default_zh">Chinese Female</option>
+                                <option value="default_en">English Female</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="gen-btn" onclick="autoNarrate()" data-i18n="oneClickGenerate">🚀 One-Click Generate</button>
+                </div>
+
+                <!-- Manual mode -->
+                <div id="narr-manual" style="display:none">
+                    <div class="field">
+                        <label data-i18n="uploadImages">Upload Images</label>
+                        <div class="upload-zone" onclick="document.getElementById('narr-imgs').click()">
+                            <input type="file" id="narr-imgs" multiple accept="image/*" onchange="onNarrImgs(event)">
+                            <div style="font-size:28px">🖼</div>
+                            <p>Click to upload images (JPG, PNG)</p>
+                        </div>
+                        <div class="narr-img-strip" id="narr-img-strip"></div>
+                    </div>
+                    <div class="field">
+                        <label data-i18n="narrationText">Narration Text</label>
+                        <textarea id="narr-text" placeholder="Enter your narration script..."></textarea>
+                        <div class="hint" id="narr-hint">0 chars</div>
+                    </div>
+                    <button class="gen-btn" onclick="manualNarrate()" data-i18n="generateVideo">Generate Video</button>
+                </div>
+
+                <div class="progress" id="narr-progress">
+                    <div class="prog-text" id="narr-prog-text">Generating...</div>
+                    <div class="bar"><div class="bar-fill" id="narr-prog-bar"></div></div>
+                </div>
+                <div class="result" id="narr-result">
+                    <h3 data-i18n="videoGenerated">✅ Video Generated!</h3>
+                    <video id="narr-video" controls style="margin-top:8px"></video>
+                    <br><a href="#" class="dl-btn" id="narr-dl" download data-i18n="download">Download</a>
+                </div>
+            </div>
+
+            <!-- ========== Templates ========== -->
+            <div id="templates-tab" class="tab-content">
+                <div class="section-title" data-i18n="promptTemplates">📋 Prompt Templates</div>
+                <div id="templates-list"></div>
+            </div>
+
+            <!-- ========== Storyboard ========== -->
+            <div id="storyboard-tab" class="tab-content">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+                    <div class="section-title" data-i18n="storyboardEditor">🎬 Storyboard Editor</div>
+                    <div class="check-line" style="margin:0">
+                        <input type="checkbox" id="concat-shots">
+                        <label for="concat-shots" data-i18n="concatenate">Concatenate output</label>
+                    </div>
+                </div>
+                <div class="shot-list" id="shots-container"></div>
+                <div class="story-cost" id="shots-cost">0 shots · $0.000</div>
+                <div class="story-actions">
+                    <button class="gen-btn secondary" onclick="addShot()" style="margin-top:0" data-i18n="addShot">+ Add Shot</button>
+                    <button class="gen-btn secondary" onclick="addShots(3)" style="margin-top:0">+ Add 3</button>
+                    <button class="gen-btn secondary" onclick="clearShots()" style="margin-top:0" data-i18n="clearAll">Clear</button>
+                </div>
+                <button class="gen-btn" onclick="generateStoryboard()" style="margin-top:14px" data-i18n="generateAll">Generate All Shots</button>
+                <div class="progress" id="story-progress">
+                    <div class="prog-text" id="story-prog-text">...</div>
+                    <div class="bar"><div class="bar-fill" id="story-prog-bar"></div></div>
+                </div>
+                <div id="story-result" style="margin-top:12px;display:none"></div>
+            </div>
+
+            <!-- ========== Dashboard ========== -->
+            <div id="dashboard-tab" class="tab-content">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+                    <div class="section-title" data-i18n="dashboard">📊 Dashboard</div>
+                    <button class="gen-btn secondary" onclick="loadDashboard()" style="width:auto;margin-top:0;padding:7px 14px;font-size:12.5px">↻ Refresh</button>
+                </div>
+                <div class="stat-grid">
+                    <div class="stat-tile">
+                        <div class="stat-v" id="stat-total-cost">$0.00</div>
+                        <div class="stat-l" data-i18n="totalCost">Total Cost</div>
+                    </div>
+                    <div class="stat-tile">
+                        <div class="stat-v" id="stat-total-gen">0</div>
+                        <div class="stat-l" data-i18n="generations">Generations</div>
+                    </div>
+                    <div class="stat-tile">
+                        <div class="stat-v" id="stat-success">0%</div>
+                        <div class="stat-l" data-i18n="successRate">Success Rate</div>
+                    </div>
+                    <div class="stat-tile">
+                        <div class="stat-v" id="stat-time">0s</div>
+                        <div class="stat-l" data-i18n="avgTime">Avg Time</div>
+                    </div>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+                    <div class="section-title" style="margin-bottom:0" data-i18n="generationHistory">Generation History</div>
+                    <button class="gen-btn secondary" onclick="clearHistory()" style="width:auto;margin-top:0;padding:6px 12px;font-size:12px;color:var(--error);border-color:var(--error)" data-i18n="clearHistory">🗑 Clear</button>
+                </div>
+                <div style="overflow-x:auto">
+                    <table class="hist-table">
+                        <thead>
+                            <tr>
+                                <th data-i18n="time">Time</th>
+                                <th data-i18n="promptCol">Prompt</th>
+                                <th>Model</th>
+                                <th>Cost</th>
+                                <th data-i18n="statusCol">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-body"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ========== Shared: reference image (for short/long modes) ========== -->
+            <div id="ref-group" style="margin-top:14px">
+                <div class="field">
+                    <label data-i18n="reference">Reference Image (Optional)</label>
+                    <div class="upload-zone" onclick="document.getElementById('ref-input').click()">
+                        <input type="file" id="ref-input" accept="image/*" onchange="onUpload(event)">
+                        <div style="font-size:24px">📷</div>
+                        <p data-i18n="uploadText">Click or drag to upload</p>
+                    </div>
+                    <div class="upload-preview" id="ref-preview">
+                        <img id="ref-img" src="" alt="">
+                    </div>
+                </div>
+            </div>
+
+            <button class="gen-btn" id="gen-btn" onclick="generate()" data-i18n="generate">Generate</button>
+
+            <div class="progress" id="progress">
+                <div class="prog-text" id="prog-text">Initializing...</div>
+                <div class="bar"><div class="bar-fill" id="prog-bar"></div></div>
+            </div>
+
+            <div class="result" id="result">
+                <h3 data-i18n="success">✅ Generated Successfully</h3>
+                <video id="result-video" controls style="display:none"></video>
+                <img id="result-image" src="" style="display:none">
+                <br><a href="#" class="dl-btn" id="dl-btn" download data-i18n="download">Download</a>
+            </div>
+
+        </div><!-- /form-body -->
+    </div><!-- /panel -->
+
+</div><!-- /app-wrap -->
+
+<!-- Proxy Toggle -->
+<div class="proxy-fab" onclick="toggleProxyPanel()">
+    <div class="proxy-dot" id="proxy-dot"></div>
+    <span id="proxy-text">Proxy ON</span>
+</div>
+<div class="proxy-panel" id="proxy-panel">
+    <div class="field">
+        <label>Proxy</label>
+        <div class="check-line">
+            <input type="checkbox" id="proxy-enabled" checked onchange="updateProxy()">
+            <label for="proxy-enabled">Enable Proxy</label>
+        </div>
+    </div>
+    <div class="field">
+        <label>Address</label>
+        <input type="text" id="proxy-addr" value="http://127.0.0.1:7897">
+    </div>
+    <button class="gen-btn" onclick="saveProxy()" style="margin-top:6px">Save</button>
+</div>
+
+<!-- AI Assistant -->
+<button class="ai-fab" onclick="toggleAiPanel()">✨</button>
+<div class="ai-panel" id="ai-panel">
+    <div class="ai-head">
+        <h3 data-i18n="aiTitle">AI Creative Assistant</h3>
+        <button class="ai-close" onclick="toggleAiPanel()">×</button>
+    </div>
+    <div class="ai-body">
+        <div class="ai-section">
+            <div class="ai-section-title" data-i18n="style">Style</div>
+            <div class="style-chips">
+                <div class="style-chip active" data-s="cinematic" onclick="pickStyle(this)" data-i18n="cinematic">Cinematic</div>
+                <div class="style-chip" data-s="anime" onclick="pickStyle(this)" data-i18n="anime">Anime</div>
+                <div class="style-chip" data-s="documentary" onclick="pickStyle(this)" data-i18n="documentary">Documentary</div>
+                <div class="style-chip" data-s="commercial" onclick="pickStyle(this)" data-i18n="commercial">Commercial</div>
+                <div class="style-chip" data-s="social" onclick="pickStyle(this)" data-i18n="social">Social</div>
+                <div class="style-chip" data-s="artistic" onclick="pickStyle(this)" data-i18n="artistic">Artistic</div>
+                <div class="style-chip" data-s="realistic" onclick="pickStyle(this)" data-i18n="realistic">Realistic</div>
+                <div class="style-chip" data-s="fantasy" onclick="pickStyle(this)" data-i18n="fantasy">Fantasy</div>
+            </div>
+        </div>
+        <div class="ai-section">
+            <div class="ai-section-title" data-i18n="customInstruction">Custom Instruction</div>
+            <input type="text" id="ai-instruction" placeholder="e.g. Make it more dramatic..." data-i18n-placeholder="instructionPlaceholder"
+                style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--bg);color:var(--text);font-family:inherit">
+        </div>
+        <div class="ai-section">
+            <div class="ai-section-title" data-i18n="aiRefImage">Reference Image</div>
+            <div class="upload-zone" onclick="document.getElementById('ai-img-input').click()" style="padding:14px">
+                <input type="file" id="ai-img-input" accept="image/*" onchange="onAiUpload(event)">
+                <p data-i18n="aiUpload">Click to upload</p>
+            </div>
+            <div class="upload-preview" id="ai-preview"><img id="ai-img" src="" alt=""></div>
+        </div>
+        <div class="ai-section">
+            <button class="ai-btn" onclick="analyzeImage()" id="btn-analyze">
+                <span>🔍</span><span data-i18n="analyzeImage">Analyze Image</span>
+            </button>
+            <button class="ai-btn" onclick="refinePrompt()" id="btn-refine">
+                <span>✨</span><span data-i18n="refinePrompt">Refine Prompt</span>
+            </button>
+        </div>
+        <div class="ai-result" id="ai-result"></div>
+        <div class="ai-section" style="border-top:1px solid var(--border);padding-top:14px;margin-top:14px">
+            <div class="ai-section-title" data-i18n="geminiModel">Gemini Model</div>
+            <select id="ai-gemini-model" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--bg);color:var(--text);font-family:inherit">
+                <optgroup label="Gemini 2.5">
+                    <option value="gemini-2.5-pro">2.5 Pro</option>
+                    <option value="gemini-2.5-flash" selected>2.5 Flash</option>
+                    <option value="gemini-2.5-flash-lite">2.5 Flash Lite</option>
+                </optgroup>
+                <optgroup label="Gemini 2.0">
+                    <option value="gemini-2.0-flash-001">2.0 Flash</option>
+                    <option value="gemini-2.0-flash-lite-001">2.0 Flash Lite</option>
+                </optgroup>
+            </select>
+        </div>
+        <div class="ai-section" style="border-top:1px solid var(--border);padding-top:14px;margin-top:14px">
+            <div class="ai-section-title" data-i18n="chatWithGemini">Chat with Gemini</div>
+            <div class="ai-chat-row">
+                <input type="text" id="chat-input" placeholder="Ask for creative ideas..." data-i18n-placeholder="chatPlaceholder"
+                    onkeydown="if(event.key==='Enter')chatSend()">
+                <button onclick="chatSend()" data-i18n="send">Send</button>
+            </div>
+            <div class="ai-reply" id="chat-reply"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// I18n
+// ─────────────────────────────────────────────────────────────────────────────
+const i18n = {
+    en: {
+        title: 'Veo Flow', subtitle: 'AI Video & Image Generation',
+        tabShort: 'Short Video', tabLong: 'Long Video', tabExtend: 'Extend', tabImage: 'Image', tabNarration: '🎙 Narration',
+        templates: '📋 Templates', storyboard: '🎬 Storyboard', dashboard: '📊 Dashboard',
+        prompt: 'Prompt', negative: 'Negative Prompt', enhance: 'Enhance Prompt with AI',
+        model: 'Model', duration: 'Duration', ratio: 'Aspect Ratio',
+        totalDuration: 'Total Duration (seconds)', splitHint: 'Segments of 8s, stitched by ffmpeg',
+        reference: 'Reference Image (Optional)', uploadText: 'Click or drag to upload',
+        generate: 'Generate', success: '✅ Generated Successfully', download: 'Download',
+        sourceVideo: 'Source Video or Last Frame', uploadVideoOrImage: 'Upload video (MP4) or last frame (JPG/PNG)',
+        aiTitle: 'AI Creative Assistant', style: 'Style', customInstruction: 'Custom Instruction',
+        aiRefImage: 'Reference Image', aiUpload: 'Click to upload',
+        analyzeImage: 'Analyze Image', refinePrompt: 'Refine Prompt',
+        chatWithGemini: 'Chat with Gemini', send: 'Send', geminiModel: 'Gemini Model',
+        usePrompt: 'Use This Prompt', useFull: 'Use Full Reply',
+        cinematic: 'Cinematic', anime: 'Anime', documentary: 'Documentary',
+        commercial: 'Commercial', social: 'Social', artistic: 'Artistic', realistic: 'Realistic', fantasy: 'Fantasy',
+        instructionPlaceholder: 'e.g. Make it more dramatic...',
+        chatPlaceholder: 'Ask for creative ideas...',
+        mode: 'Mode', auto: 'Auto', manual: 'Manual',
+        topic: 'Topic / Theme', images: 'Number of Images',
+        ttsEngine: 'TTS Engine', voice: 'Voice',
+        narrationText: 'Narration Text', oneClickGenerate: '🚀 One-Click Generate',
+        generateVideo: 'Generate Video', uploadImages: 'Upload Images',
+        videoGenerated: '✅ Video Generated!',
+        promptTemplates: '📋 Prompt Templates',
+        storyboardEditor: '🎬 Storyboard Editor', concatenate: 'Concatenate output',
+        addShot: '+ Add Shot', clearAll: 'Clear', generateAll: 'Generate All Shots',
+        generationHistory: 'Generation History', clearHistory: '🗑 Clear',
+        totalCost: 'Total Cost', generations: 'Generations',
+        successRate: 'Success Rate', avgTime: 'Avg Time',
+        time: 'Time', promptCol: 'Prompt', statusCol: 'Status',
+    },
+    zh: {
+        title: 'Veo Flow', subtitle: 'AI 视频与图像生成',
+        tabShort: '短视频', tabLong: '长视频', tabExtend: '延长', tabImage: '图像', tabNarration: '🎙 文配视频',
+        templates: '📋 模板', storyboard: '🎬 分镜', dashboard: '📊 统计',
+        prompt: '提示词', negative: '负面提示词', enhance: '用 AI 增强提示词',
+        model: '模型', duration: '时长', ratio: '宽高比',
+        totalDuration: '总时长（秒）', splitHint: '每段 8 秒，ffmpeg 拼接',
+        reference: '参考图（可选）', uploadText: '点击或拖拽上传',
+        generate: '生成', success: '✅ 生成成功', download: '下载',
+        sourceVideo: '源视频或最后一帧', uploadVideoOrImage: '上传视频 (MP4) 或最后一帧 (JPG/PNG)',
+        aiTitle: 'AI 创意助手', style: '风格', customInstruction: '自定义指令',
+        aiRefImage: '参考图', aiUpload: '点击上传',
+        analyzeImage: '分析图像', refinePrompt: '优化提示词',
+        chatWithGemini: '与 Gemini 对话', send: '发送', geminiModel: 'Gemini 模型',
+        usePrompt: '使用此提示词', useFull: '使用完整回复',
+        cinematic: '电影感', anime: '动漫', documentary: '纪录片',
+        commercial: '商业广告', social: '社交媒体', artistic: '艺术', realistic: '写实', fantasy: '奇幻',
+        instructionPlaceholder: '例如：让它更有戏剧感...',
+        chatPlaceholder: '询问创意建议...',
+        mode: '模式', auto: '自动', manual: '手动',
+        topic: '主题', images: '图片数量',
+        ttsEngine: '语音引擎', voice: '音色',
+        narrationText: '旁白文本', oneClickGenerate: '🚀 一键生成',
+        generateVideo: '生成视频', uploadImages: '上传图片',
+        videoGenerated: '✅ 视频生成成功！',
+        promptTemplates: '📋 提示词模板',
+        storyboardEditor: '🎬 分镜编辑器', concatenate: '合并输出',
+        addShot: '+ 添加镜头', clearAll: '清空', generateAll: '生成全部镜头',
+        generationHistory: '生成历史', clearHistory: '🗑 清空',
+        totalCost: '总费用', generations: '生成次数',
+        successRate: '成功率', avgTime: '平均时间',
+        time: '时间', promptCol: '提示词', statusCol: '状态',
+    }
+};
+let lang = 'en';
+
+function applyI18n() {
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const k = el.dataset.i18n;
+        if (i18n[lang][k]) el.textContent = i18n[lang][k];
+    });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const k = el.dataset.i18nPlaceholder;
+        if (i18n[lang][k]) el.placeholder = i18n[lang][k];
+    });
+}
+
+function toggleLang() {
+    lang = lang === 'en' ? 'zh' : 'en';
+    applyI18n();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Theme
+// ─────────────────────────────────────────────────────────────────────────────
+function toggleTheme() {
+    const t = document.body.dataset.theme === 'dark' ? 'light' : 'dark';
+    document.body.dataset.theme = t;
+    localStorage.setItem('theme', t);
+}
+const savedTheme = localStorage.getItem('theme');
+if (savedTheme) document.body.dataset.theme = savedTheme;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// State
+// ─────────────────────────────────────────────────────────────────────────────
+const API = '';
+let dur = 8, extendDur = 8, mode = 'short', taskId = null, pollTimer = null, aiStyle = 'cinematic';
+let extendFile = null, extendFileType = null;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Tab switching
+// ─────────────────────────────────────────────────────────────────────────────
+const SHARED = ['ref-group', 'gen-btn', 'progress', 'result'];
+const NO_GEN_TABS = ['templates', 'storyboard', 'dashboard', 'narration'];
+
+function switchTab(m) {
+    mode = m;
+    // deactivate all tabs
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+    // activate tab button
+    const tabEl = document.getElementById('tab-' + m);
+    if (tabEl) tabEl.classList.add('active');
+    // activate content
+    const contentEl = document.getElementById(m + '-tab');
+    if (contentEl) contentEl.classList.add('active');
+
+    // shared elements visibility
+    const hideShared = NO_GEN_TABS.includes(m);
+    SHARED.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = hideShared ? 'none' : '';
+    });
+
+    if (!hideShared) {
+        // ref image only for short / long
+        const refGroup = document.getElementById('ref-group');
+        refGroup.style.display = (m === 'short' || m === 'long') ? '' : 'none';
+
+        // update gen-btn text
+        const btn = document.getElementById('gen-btn');
+        const labels = {
+            short: lang === 'zh' ? '生成视频' : 'Generate Video',
+            long: lang === 'zh' ? '生成视频' : 'Generate Video',
+            extend: lang === 'zh' ? '延长视频' : 'Extend Video',
+            image: lang === 'zh' ? '生成图像' : 'Generate Image',
+        };
+        btn.textContent = labels[m] || (lang === 'zh' ? '生成' : 'Generate');
+    }
+
+    if (m === 'templates') loadTemplates();
+    if (m === 'dashboard') loadDashboard();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// More menu
+// ─────────────────────────────────────────────────────────────────────────────
+function toggleMoreMenu(e) {
+    e.stopPropagation();
+    document.getElementById('more-menu').classList.toggle('open');
+}
+
+function closeMoreMenu() {
+    document.getElementById('more-menu').classList.remove('open');
+}
+
+document.addEventListener('click', () => closeMoreMenu());
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Pills
+// ─────────────────────────────────────────────────────────────────────────────
+function pickDur(el) {
+    document.querySelectorAll('#short-tab .pill').forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+    dur = parseInt(el.dataset.v);
+}
+
+function pickExtendDur(el) {
+    document.querySelectorAll('#extend-tab .pill').forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+    extendDur = parseInt(el.dataset.v);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Upload handlers
+// ─────────────────────────────────────────────────────────────────────────────
+function onUpload(e) {
+    const f = e.target.files[0]; if (!f) return;
+    const r = new FileReader();
+    r.onload = ev => {
+        document.getElementById('ref-img').src = ev.target.result;
+        document.getElementById('ref-preview').classList.add('show');
+    };
+    r.readAsDataURL(f);
+}
+
+function onAiUpload(e) {
+    const f = e.target.files[0]; if (!f) return;
+    const r = new FileReader();
+    r.onload = ev => {
+        document.getElementById('ai-img').src = ev.target.result;
+        document.getElementById('ai-preview').classList.add('show');
+    };
+    r.readAsDataURL(f);
+}
+
+function onExtendUpload(e) {
+    const f = e.target.files[0]; if (!f) return;
+    extendFile = f;
+    extendFileType = f.type.startsWith('video') ? 'video' : 'image';
+    const prev = document.getElementById('extend-preview');
+    const vid = document.getElementById('extend-video-preview');
+    const img = document.getElementById('extend-img-preview');
+    prev.classList.add('show');
+    if (extendFileType === 'video') {
+        vid.style.display = 'block'; img.style.display = 'none';
+        vid.src = URL.createObjectURL(f);
+    } else {
+        vid.style.display = 'none'; img.style.display = 'block';
+        const r = new FileReader();
+        r.onload = ev => img.src = ev.target.result;
+        r.readAsDataURL(f);
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Style picker
+// ─────────────────────────────────────────────────────────────────────────────
+function pickStyle(el) {
+    document.querySelectorAll('.style-chip').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+    aiStyle = el.dataset.s;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AI & Proxy panels
+// ─────────────────────────────────────────────────────────────────────────────
+function toggleAiPanel() { document.getElementById('ai-panel').classList.toggle('show'); }
+function toggleProxyPanel() { document.getElementById('proxy-panel').classList.toggle('show'); }
+
+function updateProxy() {
+    const on = document.getElementById('proxy-enabled').checked;
+    document.getElementById('proxy-dot').classList.toggle('off', !on);
+    document.getElementById('proxy-text').textContent = on ? 'Proxy ON' : 'Proxy OFF';
+}
+
+async function saveProxy() {
+    const enabled = document.getElementById('proxy-enabled').checked;
+    const addr = document.getElementById('proxy-addr').value.trim();
+    try {
+        await fetch(`${API}/api/proxy`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ enabled, address: addr })
+        });
+        document.getElementById('proxy-panel').classList.remove('show');
+    } catch (e) { alert('Save failed'); }
+}
+
+function getGeminiModel() {
+    const el = document.getElementById('ai-gemini-model');
+    return el ? el.value : 'gemini-2.5-flash';
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AI functions
+// ─────────────────────────────────────────────────────────────────────────────
+async function analyzeImage() {
+    const inp = document.getElementById('ai-img-input');
+    if (!inp.files.length) { alert('Please upload an image'); return; }
+    const btn = document.getElementById('btn-analyze');
+    btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Analyzing...';
+    const res = document.getElementById('ai-result');
+    res.classList.remove('show');
+    try {
+        const fd = new FormData();
+        fd.append('image', inp.files[0]);
+        fd.append('style', aiStyle);
+        fd.append('target', mode === 'image' ? 'image' : 'video');
+        fd.append('instruction', document.getElementById('ai-instruction').value);
+        fd.append('gemini_model', getGeminiModel());
+        const r = await fetch(`${API}/api/analyze-image`, { method: 'POST', body: fd });
+        const d = await r.json();
+        if (d.error) throw new Error(d.error);
+        let html = '';
+        if (d.description) html += `<div class="lbl">Description</div><div class="val">${d.description}</div>`;
+        if (d.prompt) html += `<div class="lbl">Generated Prompt</div><div class="val">${d.prompt}</div>`;
+        if (d.negative_prompt) html += `<div class="lbl">Negative</div><div class="val">${d.negative_prompt}</div>`;
+        html += `<button class="ai-use-btn" onclick="useAiResult('${encodeURIComponent(d.prompt||'')}','${encodeURIComponent(d.negative_prompt||'')}')">Use This Prompt</button>`;
+        res.innerHTML = html; res.classList.add('show');
+    } catch (e) { alert('Error: ' + e.message); }
+    btn.disabled = false; btn.innerHTML = '<span>🔍</span> Analyze Image';
+}
+
+async function refinePrompt() {
+    const promptEl = document.getElementById(mode + '-prompt');
+    if (!promptEl) { alert('No prompt field for this mode'); return; }
+    const prompt = promptEl.value.trim();
+    if (!prompt) { alert('Please enter a prompt first'); return; }
+    const btn = document.getElementById('btn-refine');
+    btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Refining...';
+    const res = document.getElementById('ai-result');
+    res.classList.remove('show');
+    try {
+        const r = await fetch(`${API}/api/refine-prompt`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt, target: mode === 'image' ? 'image' : 'video', style: aiStyle, gemini_model: getGeminiModel() })
+        });
+        const d = await r.json();
+        if (d.error) throw new Error(d.error);
+        let html = '';
+        if (d.changes) html += `<div class="lbl">Changes</div><div class="val">${d.changes}</div>`;
+        if (d.prompt) html += `<div class="lbl">Refined Prompt</div><div class="val">${d.prompt}</div>`;
+        if (d.negative_prompt) html += `<div class="lbl">Negative</div><div class="val">${d.negative_prompt}</div>`;
+        html += `<button class="ai-use-btn" onclick="useAiResult('${encodeURIComponent(d.prompt||'')}','${encodeURIComponent(d.negative_prompt||'')}')">Use This Prompt</button>`;
+        res.innerHTML = html; res.classList.add('show');
+    } catch (e) { alert('Error: ' + e.message); }
+    btn.disabled = false; btn.innerHTML = '<span>✨</span> Refine Prompt';
+}
+
+function useAiResult(prompt, neg) {
+    const promptEl = document.getElementById(mode + '-prompt');
+    const negEl = document.getElementById(mode + '-neg');
+    if (promptEl) promptEl.value = decodeURIComponent(prompt);
+    if (neg && negEl) negEl.value = decodeURIComponent(neg);
+    toggleAiPanel();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function chatSend() {
+    const inp = document.getElementById('chat-input');
+    const msg = inp.value.trim(); if (!msg) return;
+    inp.value = '';
+    const reply = document.getElementById('chat-reply');
+    reply.style.display = 'block';
+    reply.innerHTML = '<span class="spinner"></span> Thinking...';
+    try {
+        const r = await fetch(`${API}/api/chat`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: msg, context: `Mode:${mode}, Style:${aiStyle}`, gemini_model: getGeminiModel() })
+        });
+        const d = await r.json();
+        if (d.error) throw new Error(d.error);
+        const text = d.reply || 'No response';
+        const promptMatch = text.match(/(?:prompt|提示词)[:\s]*([^\n]+)/i);
+        const extracted = promptMatch ? promptMatch[1].trim() : '';
+        let html = text.replace(/\n/g, '<br>');
+        html += '<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">';
+        if (extracted) html += `<button class="ai-use-btn" onclick="useChatPrompt('${encodeURIComponent(extracted)}')">Use This Prompt</button>`;
+        html += `<button class="ai-use-btn" onclick="useChatFull('${encodeURIComponent(text)}')" style="background:var(--text2);margin-top:6px">Use Full Reply</button>`;
+        html += '</div>';
+        reply.innerHTML = html;
+    } catch (e) { reply.innerHTML = 'Error: ' + e.message; }
+}
+
+function useChatPrompt(p) {
+    const el = document.getElementById(mode + '-prompt');
+    if (el) el.value = decodeURIComponent(p);
+    toggleAiPanel();
+}
+
+function useChatFull(t) {
+    const clean = decodeURIComponent(t).replace(/<br>/g, '\n').replace(/<[^>]+>/g, '');
+    const el = document.getElementById(mode + '-prompt');
+    if (el) el.value = clean.substring(0, 500);
+    toggleAiPanel();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Cost estimate & confirm
+// ─────────────────────────────────────────────────────────────────────────────
+const PRICES = {
+    'veo3.1': 0.40, 'veo3.1-fast': 0.20, 'veo3': 0.40, 'veo3-fast': 0.20, 'veo2': 0.50,
+    'imagen-3.0-generate-002': 0.04, 'imagen-3.0-fast-generate-001': 0.02
+};
+
+function estimateCost() {
+    if (mode === 'image') {
+        const m = document.getElementById('image-model').value;
+        const p = PRICES[m] || 0.04;
+        return { cost: p, text: `$${p.toFixed(2)}` };
+    } else if (mode === 'long') {
+        const m = document.getElementById('long-model').value;
+        const s = parseInt(document.getElementById('long-time').value) || 60;
+        const cost = (PRICES[m] || 0.40) * s;
+        return { cost, text: `$${cost.toFixed(2)} (${s}s × $${PRICES[m] || 0.40}/s)` };
+    } else if (mode === 'extend') {
+        const m = document.getElementById('extend-model').value;
+        const cost = (PRICES[m] || 0.40) * extendDur;
+        return { cost, text: `$${cost.toFixed(2)}` };
+    } else {
+        const m = document.getElementById('short-model').value;
+        const cost = (PRICES[m] || 0.40) * dur;
+        return { cost, text: `$${cost.toFixed(2)} (${dur}s × $${PRICES[m] || 0.40}/s)` };
+    }
+}
+
+function showCostConfirm() {
+    const est = estimateCost();
+    const msg = lang === 'zh'
+        ? `预估费用: ${est.text}\n\n⚠️ 提醒：Google Cloud 按实际生成的视频秒数计费。\n点击确认后任务在服务器后台运行，关闭浏览器不会停止任务！\n\n确定生成吗？`
+        : `Estimated cost: ${est.text}\n\n⚠️ BILLING REMINDER:\nGoogle Cloud bills per second of generated video.\nClosing your browser will NOT stop the task!\n\nContinue?`;
+    return confirm(msg);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Generate
+// ─────────────────────────────────────────────────────────────────────────────
+let isSubmitting = false;
+
+async function generate() {
+    if (isSubmitting) { alert(lang === 'zh' ? '正在提交，请稍候...' : 'Submitting, please wait...'); return; }
+    if (!showCostConfirm()) return;
+
+    isSubmitting = true;
+    const btn = document.getElementById('gen-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> ' + (lang === 'zh' ? '提交中...' : 'Submitting...');
+
+    let prompt, neg, enhance, model, ratio;
+    if (mode === 'image') {
+        prompt = document.getElementById('image-prompt').value;
+        neg = document.getElementById('image-neg').value;
+        enhance = document.getElementById('image-enhance').checked;
+        model = document.getElementById('image-model').value;
+        ratio = document.getElementById('image-ratio').value;
+    } else if (mode === 'long') {
+        prompt = document.getElementById('long-prompt').value;
+        neg = document.getElementById('long-neg').value;
+        enhance = document.getElementById('long-enhance').checked;
+        model = document.getElementById('long-model').value;
+        ratio = document.getElementById('long-ratio').value;
+    } else if (mode === 'extend') {
+        prompt = document.getElementById('extend-prompt').value;
+        neg = document.getElementById('extend-neg').value;
+        enhance = document.getElementById('extend-enhance').checked;
+        model = document.getElementById('extend-model').value;
+        ratio = document.getElementById('extend-ratio').value;
+        if (!extendFile) {
+            alert(lang === 'zh' ? '请上传视频或最后一帧' : 'Please upload video or last frame');
+            isSubmitting = false; btn.disabled = false; btn.textContent = 'Generate'; return;
         }
-        function updateStoryCost() {
-            const cost = shots.reduce((sum, s) => sum + (s.duration || 8) * 0.015, 0);
-            document.getElementById('shots-cost').textContent = `${shots.length} shots · $${cost.toFixed(3)}`;
+    } else {
+        prompt = document.getElementById('short-prompt').value;
+        neg = document.getElementById('short-neg').value;
+        enhance = document.getElementById('short-enhance').checked;
+        model = document.getElementById('short-model').value;
+        ratio = document.getElementById('short-ratio').value;
+    }
+
+    if (!prompt.trim()) {
+        alert(lang === 'zh' ? '请输入提示词' : 'Please enter a prompt');
+        isSubmitting = false; btn.disabled = false; btn.textContent = 'Generate'; return;
+    }
+
+    const prog = document.getElementById('progress');
+    const result = document.getElementById('result');
+    prog.classList.add('show'); result.classList.remove('show');
+    document.getElementById('prog-text').textContent = 'Submitting...';
+    document.getElementById('prog-bar').style.width = '5%';
+
+    try {
+        let r, d;
+        if (mode === 'extend') {
+            const fd = new FormData();
+            fd.append('prompt', prompt); fd.append('negative_prompt', neg);
+            fd.append('enhance_prompt', enhance); fd.append('model', model);
+            fd.append('ratio', ratio); fd.append('duration', extendDur);
+            if (extendFileType === 'video') fd.append('video', extendFile);
+            else fd.append('last_frame', extendFile);
+            r = await fetch(`${API}/api/extend`, { method: 'POST', body: fd });
+            d = await r.json();
+        } else {
+            const fd = new FormData();
+            fd.append('mode', mode); fd.append('prompt', prompt);
+            fd.append('negative_prompt', neg); fd.append('enhance_prompt', enhance);
+            fd.append('model', model); fd.append('ratio', ratio);
+            if (mode === 'long') fd.append('total_seconds', document.getElementById('long-time').value);
+            else if (mode === 'short') fd.append('duration', dur);
+            const img = document.getElementById('ref-input');
+            if (img.files.length) fd.append('image', img.files[0]);
+            r = await fetch(`${API}/api/generate`, { method: 'POST', body: fd });
+            d = await r.json();
         }
-        async function generateStoryboard() {
-            if (shots.length === 0) return alert('Add at least one shot');
-            document.getElementById('story-progress').classList.add('show');
-            // TODO: implement batch generation
-            setTimeout(() => {
-                document.getElementById('story-progress').classList.remove('show');
-                alert('Storyboard generation started!');
-            }, 1000);
+        if (d.error) throw new Error(d.error);
+        taskId = d.task_id;
+        document.getElementById('prog-text').textContent = 'Task created...';
+        document.getElementById('prog-bar').style.width = '10%';
+        pollTimer = setInterval(checkStatus, 2000);
+    } catch (e) {
+        alert('Error: ' + e.message);
+        isSubmitting = false;
+        btn.disabled = false;
+        btn.textContent = lang === 'zh' ? '生成' : 'Generate';
+        prog.classList.remove('show');
+    }
+}
+
+async function checkStatus() {
+    if (!taskId) return;
+    try {
+        const r = await fetch(`${API}/api/task/${taskId}`);
+        const d = await r.json();
+        document.getElementById('prog-text').textContent = d.message || '';
+        document.getElementById('prog-bar').style.width = (d.progress || 0) + '%';
+        if (d.status === 'completed') {
+            clearInterval(pollTimer); isSubmitting = false;
+            const btn = document.getElementById('gen-btn'); btn.disabled = false;
+            btn.textContent = lang === 'zh' ? '生成' : 'Generate';
+            document.getElementById('progress').classList.remove('show');
+            document.getElementById('result').classList.add('show');
+            const vid = document.getElementById('result-video');
+            const img = document.getElementById('result-image');
+            const dl = document.getElementById('dl-btn');
+            if (mode === 'image') {
+                vid.style.display = 'none'; img.style.display = 'block';
+                img.src = d.output_url; dl.href = d.output_url;
+                dl.textContent = lang === 'zh' ? '下载图片' : 'Download Image';
+            } else {
+                img.style.display = 'none'; vid.style.display = 'block';
+                vid.src = d.output_url; dl.href = d.output_url;
+                dl.textContent = lang === 'zh' ? '下载视频' : 'Download Video';
+            }
+        } else if (d.status === 'error') {
+            clearInterval(pollTimer); isSubmitting = false;
+            const btn = document.getElementById('gen-btn'); btn.disabled = false;
+            btn.textContent = lang === 'zh' ? '生成' : 'Generate';
+            document.getElementById('progress').classList.remove('show');
+            alert('Failed: ' + d.message);
+        }
+    } catch (e) { console.error(e); }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Narration
+// ─────────────────────────────────────────────────────────────────────────────
+let narrMode = 'auto', narrImages = [];
+
+function setNarrMode(m, el) {
+    narrMode = m;
+    document.querySelectorAll('#narration-tab .pill').forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('narr-auto').style.display = m === 'auto' ? 'block' : 'none';
+    document.getElementById('narr-manual').style.display = m === 'manual' ? 'block' : 'none';
+}
+
+function onNarrEngineChange() {
+    const engine = document.getElementById('narr-engine').value;
+    const sel = document.getElementById('narr-voice');
+    sel.innerHTML = engine === 'gemini'
+        ? '<option>Kore</option><option>Puck</option><option>Charon</option><option>Fenrir</option>'
+        : '<option value="mimo_default">MiMo Default</option><option value="default_zh">Chinese Female</option><option value="default_en">English Female</option>';
+}
+
+function onNarrDurUnitChange() {
+    const unit = document.getElementById('narr-dur-unit').value;
+    const inp = document.getElementById('narr-dur');
+    if (unit === 'm') {
+        inp.value = Math.round((parseInt(inp.value) || 30) / 60) || 1;
+        inp.min = 1; inp.max = 10;
+    } else {
+        inp.value = (parseInt(inp.value) || 1) * 60;
+        inp.min = 5; inp.max = 600;
+    }
+}
+
+function getNarrDurSec() {
+    const v = parseInt(document.getElementById('narr-dur').value) || 30;
+    return document.getElementById('narr-dur-unit').value === 'm' ? v * 60 : v;
+}
+
+async function autoNarrate() {
+    const topic = document.getElementById('narr-topic').value.trim();
+    if (!topic) return alert('Please enter a topic');
+
+    const prog = document.getElementById('narr-progress');
+    const progText = document.getElementById('narr-prog-text');
+    const progBar = document.getElementById('narr-prog-bar');
+    prog.classList.add('show');
+    document.getElementById('narr-result').classList.remove('show');
+
+    const durSec = getNarrDurSec();
+    const imgCount = parseInt(document.getElementById('narr-img-count').value);
+    const engine = document.getElementById('narr-engine').value;
+    const voice = document.getElementById('narr-voice').value;
+
+    try {
+        progText.textContent = 'Step 1/3: Generating text & prompts...';
+        progBar.style.width = '10%';
+
+        const textRes = await fetch(`${API}/api/narration/auto`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ topic, image_count: imgCount, duration: durSec })
+        });
+        const textData = await textRes.json();
+        if (textData.error) throw new Error(textData.error);
+
+        progBar.style.width = '30%';
+
+        const prompts = textData.image_prompts || [];
+        const generatedImages = [];
+        for (let i = 0; i < prompts.length; i++) {
+            progText.textContent = `Step 2/3: Generating image ${i+1}/${prompts.length}...`;
+            progBar.style.width = (30 + (i+1)/prompts.length * 30) + '%';
+            const imgRes = await fetch(`${API}/api/narration/ai-image`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt: prompts[i] })
+            });
+            const imgData = await imgRes.json();
+            if (imgData.error) console.warn('Image gen error:', imgData.error);
+            else generatedImages.push(imgData.filename);
+        }
+        if (generatedImages.length === 0) throw new Error('Failed to generate any images');
+
+        progText.textContent = 'Step 3/3: Generating audio & stitching video...';
+        progBar.style.width = '70%';
+
+        const narRes = await fetch(`${API}/api/narration`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: textData.text, images: generatedImages, voice, engine })
+        });
+        const narData = await narRes.json();
+        if (narData.error) throw new Error(narData.error);
+
+        progBar.style.width = '100%';
+        prog.classList.remove('show');
+        document.getElementById('narr-result').classList.add('show');
+        document.getElementById('narr-video').src = narData.video_url;
+        document.getElementById('narr-dl').href = narData.video_url;
+    } catch (e) {
+        alert('Error: ' + e.message);
+        prog.classList.remove('show');
+    }
+}
+
+function onNarrImgs(e) {
+    const files = Array.from(e.target.files);
+    narrImages = files;
+    const strip = document.getElementById('narr-img-strip');
+    strip.innerHTML = '';
+    files.forEach(f => {
+        const reader = new FileReader();
+        reader.onload = ev => {
+            const img = document.createElement('img');
+            img.className = 'narr-img-thumb';
+            img.src = ev.target.result;
+            strip.appendChild(img);
+        };
+        reader.readAsDataURL(f);
+    });
+}
+
+document.getElementById('narr-text')?.addEventListener('input', function() {
+    const chars = this.value.length;
+    const secs = Math.max(5, Math.ceil(chars / 5));
+    document.getElementById('narr-hint').textContent = `${chars} chars · ~${secs}s`;
+});
+
+async function manualNarrate() {
+    const text = document.getElementById('narr-text').value.trim();
+    if (!text) return alert('Please enter narration text');
+    if (narrImages.length === 0) return alert('Please upload at least one image');
+
+    const prog = document.getElementById('narr-progress');
+    const progText = document.getElementById('narr-prog-text');
+    const progBar = document.getElementById('narr-prog-bar');
+    prog.classList.add('show');
+
+    try {
+        progText.textContent = 'Uploading images...';
+        progBar.style.width = '20%';
+
+        const uploaded = [];
+        for (let i = 0; i < narrImages.length; i++) {
+            const fd = new FormData();
+            fd.append('image', narrImages[i]);
+            const res = await fetch(`${API}/api/upload`, { method: 'POST', body: fd });
+            const data = await res.json();
+            if (data.error) throw new Error(data.error);
+            uploaded.push(data.filename);
+            progBar.style.width = (20 + (i+1)/narrImages.length * 40) + '%';
         }
 
-        // ========== Dashboard ==========
-        async function loadDashboard() {
-            try {
-                const r = await fetch(`${API}/api/history/stats`);
-                const d = await r.json();
-                document.getElementById('stat-total-cost').textContent = '$' + (d.total_cost || 0).toFixed(2);
-                document.getElementById('stat-total-gen').textContent = d.total_generations || 0;
-                document.getElementById('stat-success').textContent = (d.success_rate || 0) + '%';
-                document.getElementById('stat-time').textContent = (d.avg_time || 0) + 's';
+        progText.textContent = 'Generating audio & video...';
+        progBar.style.width = '65%';
 
-                const hr = await fetch(`${API}/api/history?limit=50`);
-                const hd = await hr.json();
-                document.getElementById('history-body').innerHTML = (hd.history || []).map(h => `
-                    <tr>
-                        <td>${new Date(h.created_at).toLocaleString()}</td>
-                        <td>${h.prompt?.substring(0, 40)}...</td>
-                        <td>${h.model}</td>
-                        <td>$${(h.cost || 0).toFixed(3)}</td>
-                        <td><span style="color:${h.status==='completed'?'var(--success)':h.status==='error'?'var(--error)':'var(--warning)'}">${h.status}</span></td>
-                    </tr>
-                `).join('');
-            } catch (e) { console.error(e); }
+        const narRes = await fetch(`${API}/api/narration`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text, images: uploaded, voice: 'mimo_default', engine: 'mimo' })
+        });
+        const narData = await narRes.json();
+        if (narData.error) throw new Error(narData.error);
+
+        progBar.style.width = '100%';
+        prog.classList.remove('show');
+        document.getElementById('narr-result').classList.add('show');
+        document.getElementById('narr-video').src = narData.video_url;
+        document.getElementById('narr-dl').href = narData.video_url;
+    } catch (e) {
+        alert('Error: ' + e.message);
+        prog.classList.remove('show');
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Templates
+// ─────────────────────────────────────────────────────────────────────────────
+async function loadTemplates() {
+    try {
+        const r = await fetch(`${API}/api/templates`);
+        const d = await r.json();
+        const list = document.getElementById('templates-list');
+        list.innerHTML = (d.categories || []).map(cat => `
+            <div style="margin-bottom:20px">
+                <div class="tpl-cat-title">${cat.icon || ''} ${cat.name}</div>
+                <div class="tpl-grid">
+                    ${(cat.templates || []).map(t => `
+                        <div class="tpl-card" onclick="useTemplate(${JSON.stringify(t.prompt).replace(/"/g, '&quot;')})">
+                            <h4>${t.name}</h4>
+                            <p>${t.prompt.substring(0, 70)}${t.prompt.length > 70 ? '…' : ''}</p>
+                            <div class="tpl-meta">${t.model || 'veo3.1'} · ${t.duration || 8}s · ${t.ratio || '16:9'}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `).join('');
+    } catch (e) { console.error(e); }
+}
+
+function useTemplate(prompt) {
+    document.getElementById('short-prompt').value = prompt;
+    switchTab('short');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Storyboard
+// ─────────────────────────────────────────────────────────────────────────────
+let shots = [];
+
+function addShot() {
+    shots.push({ id: Date.now() + Math.random(), prompt: '', model: 'veo3.1', duration: 8, ratio: '16:9' });
+    renderShots();
+}
+
+function addShots(n) { for (let i = 0; i < n; i++) addShot(); }
+
+function clearShots() { shots = []; renderShots(); }
+
+function removeShot(id) { shots = shots.filter(s => s.id !== id); renderShots(); }
+
+function updateShot(id, field, value) {
+    const s = shots.find(s => s.id === id);
+    if (s) s[field] = field === 'duration' ? parseInt(value) : value;
+    updateStoryCost();
+}
+
+function renderShots() {
+    const container = document.getElementById('shots-container');
+    container.innerHTML = shots.map((s, i) => `
+        <div class="shot-row">
+            <span class="shot-num">${i + 1}</span>
+            <input type="text" placeholder="Shot prompt..." value="${s.prompt.replace(/"/g,'&quot;')}"
+                oninput="updateShot(${s.id}, 'prompt', this.value)">
+            <select onchange="updateShot(${s.id}, 'model', this.value)" style="width:110px">
+                <option value="veo3.1" ${s.model==='veo3.1'?'selected':''}>veo3.1</option>
+                <option value="veo3.1-fast" ${s.model==='veo3.1-fast'?'selected':''}>veo3.1-fast</option>
+                <option value="veo3" ${s.model==='veo3'?'selected':''}>veo3</option>
+                <option value="veo2" ${s.model==='veo2'?'selected':''}>veo2</option>
+            </select>
+            <select onchange="updateShot(${s.id}, 'ratio', this.value)" style="width:72px">
+                <option value="16:9" ${s.ratio==='16:9'?'selected':''}>16:9</option>
+                <option value="9:16" ${s.ratio==='9:16'?'selected':''}>9:16</option>
+            </select>
+            <input type="number" value="${s.duration}" min="4" max="8" style="width:52px"
+                onchange="updateShot(${s.id}, 'duration', this.value)">
+            <button class="shot-del" onclick="removeShot(${s.id})">×</button>
+        </div>
+    `).join('');
+    updateStoryCost();
+}
+
+function updateStoryCost() {
+    const cost = shots.reduce((sum, s) => sum + (s.duration || 8) * (PRICES[s.model] || 0.40), 0);
+    document.getElementById('shots-cost').textContent = `${shots.length} shots · $${cost.toFixed(3)}`;
+}
+
+async function generateStoryboard() {
+    if (shots.length === 0) return alert('Add at least one shot');
+    const validShots = shots.filter(s => s.prompt.trim());
+    if (validShots.length === 0) return alert('Please add prompts to your shots');
+
+    const concat = document.getElementById('concat-shots').checked;
+    const prog = document.getElementById('story-progress');
+    const progText = document.getElementById('story-prog-text');
+    const progBar = document.getElementById('story-prog-bar');
+    prog.classList.add('show');
+    progText.textContent = 'Starting batch generation...';
+    progBar.style.width = '5%';
+
+    try {
+        const r = await fetch(`${API}/api/batch`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                shots: validShots.map(s => ({
+                    prompt: s.prompt, model: s.model, duration: s.duration, ratio: s.ratio
+                })),
+                name: `Storyboard_${Date.now()}`,
+                concat,
+            })
+        });
+        const d = await r.json();
+        if (d.error) throw new Error(d.error);
+
+        const batchId = d.batch_id;
+        let batchDone = false;
+
+        while (!batchDone) {
+            await new Promise(res => setTimeout(res, 3000));
+            const sr = await fetch(`${API}/api/batch/${batchId}`);
+            const sd = await sr.json();
+            const pct = Math.round((sd.completed_shots || 0) / validShots.length * 90) + 5;
+            progBar.style.width = pct + '%';
+            progText.textContent = sd.message || `${sd.completed_shots}/${validShots.length} shots done`;
+            if (sd.status === 'completed') batchDone = true;
         }
 
-        async function clearHistory() {
-            if (!confirm('Clear all history?')) return;
-            await fetch(`${API}/api/history/clear`, { method: 'POST' });
-            loadDashboard();
-        }
+        progBar.style.width = '100%';
+        prog.classList.remove('show');
 
-        // Init
-        addShot(); addShot(); addShot();
-    </script>
+        // Show results
+        const sr = await fetch(`${API}/api/batch/${batchId}`);
+        const sd = await sr.json();
+        const resultDiv = document.getElementById('story-result');
+        resultDiv.style.display = 'block';
+
+        let html = `<div class="section-title">Results: ${sd.completed_shots}/${validShots.length} completed</div>`;
+        if (sd.output_path) {
+            html += `<div style="margin-bottom:10px"><a class="dl-btn" href="/api/download/${batchId}_final" download>⬇ Download Combined Video</a></div>`;
+        }
+        html += (sd.shots || []).map((s, i) => {
+            const badge = s.status === 'completed'
+                ? `<span class="badge badge-ok">✓ Done</span>`
+                : `<span class="badge badge-err">✗ Error: ${s.error || 'failed'}</span>`;
+            const dl = s.status === 'completed'
+                ? ` <a class="dl-btn" href="/api/download/${batchId}_shot_${String(i).padStart(3,'0')}" download style="padding:5px 10px;font-size:11px">⬇ DL</a>`
+                : '';
+            return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px">
+                <span style="color:var(--text3);font-weight:600;min-width:24px">${i+1}</span>
+                <span style="flex:1;color:var(--text2)">${s.prompt.substring(0,60)}${s.prompt.length>60?'…':''}</span>
+                ${badge}${dl}
+            </div>`;
+        }).join('');
+        resultDiv.innerHTML = html;
+
+    } catch (e) {
+        alert('Error: ' + e.message);
+        prog.classList.remove('show');
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Dashboard
+// ─────────────────────────────────────────────────────────────────────────────
+async function loadDashboard() {
+    try {
+        const [sr, hr] = await Promise.all([
+            fetch(`${API}/api/history/stats`),
+            fetch(`${API}/api/history?limit=50`)
+        ]);
+        const stats = await sr.json();
+        const hist = await hr.json();
+
+        document.getElementById('stat-total-cost').textContent = '$' + (stats.total_cost || 0).toFixed(2);
+        document.getElementById('stat-total-gen').textContent = stats.total_generations || 0;
+        document.getElementById('stat-success').textContent = (stats.success_rate || 0) + '%';
+        document.getElementById('stat-time').textContent = (stats.avg_time || 0) + 's';
+
+        const rows = (hist.history || []).map(h => {
+            const dt = h.created_at ? new Date(h.created_at).toLocaleString() : '-';
+            const prompt = (h.prompt || '').substring(0, 36);
+            const cost = typeof h.cost === 'number' ? '$' + h.cost.toFixed(3) : '-';
+            const badge = h.status === 'completed'
+                ? '<span class="badge badge-ok">✓ OK</span>'
+                : h.status === 'error'
+                ? '<span class="badge badge-err">✗ Error</span>'
+                : '<span class="badge badge-pend">⏳</span>';
+            return `<tr>
+                <td>${dt}</td>
+                <td>${prompt}${(h.prompt||'').length>36?'…':''}</td>
+                <td>${h.model || '-'}</td>
+                <td>${cost}</td>
+                <td>${badge}</td>
+            </tr>`;
+        }).join('');
+        document.getElementById('history-body').innerHTML = rows || '<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:16px">No history yet</td></tr>';
+    } catch (e) { console.error(e); }
+}
+
+async function clearHistory() {
+    if (!confirm('Clear all generation history?')) return;
+    await fetch(`${API}/api/history/clear`, { method: 'POST' });
+    loadDashboard();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Init
+// ─────────────────────────────────────────────────────────────────────────────
+addShot(); addShot(); addShot();
+switchTab('short');
+</script>
 </body>
-
 </html>

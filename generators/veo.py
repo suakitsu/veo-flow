@@ -1,6 +1,7 @@
 """
 Veo 视频生成器模块
 支持：短视频、视频延长（官方 SDK）、长视频拼接
+生成完成后自动写入 history_manager
 """
 
 import os
@@ -32,12 +33,10 @@ class VeoGenerator:
 
     @staticmethod
     def _resolve_model(model: str) -> str:
-        """将简写模型名解析为完整 model_id"""
         return VEO_MODELS.get(model, model)
 
     @staticmethod
     def _poll_operation(client, operation, task: dict, label: str = 'Generating'):
-        """通用轮询方法，消除重复代码"""
         waited = 0
         idx = 0
         while waited < POLL_MAX_WAIT:
@@ -58,7 +57,6 @@ class VeoGenerator:
 
     @staticmethod
     def _save_video(operation, output_path: str) -> bool:
-        """从 operation 结果中提取并保存视频，成功返回 True"""
         if not (operation.response and operation.response.generated_videos):
             return False
         gen = operation.response.generated_videos[0]
@@ -91,8 +89,10 @@ class VeoGenerator:
                  output_path: str = None, reference_image: str = None,
                  negative_prompt: str = None, enhance_prompt: bool = False):
         """生成单段短视频"""
+        from services import history_manager as hm
         model_id = self._resolve_model(model)
         client = get_client()
+        start = time.time()
 
         task['status'] = 'running'
         task['message'] = 'Sending request...'
@@ -125,20 +125,29 @@ class VeoGenerator:
         operation, _ = self._poll_operation(client, operation, task, 'Generating')
 
         if operation.done is not True:
+            hm.record(task['id'], prompt, model, model_id, duration, task.get('mode', 'short'),
+                      aspect_ratio, 'error', time.time() - start)
             raise RuntimeError("Generation timeout")
         if operation.error:
+            hm.record(task['id'], prompt, model, model_id, duration, task.get('mode', 'short'),
+                      aspect_ratio, 'error', time.time() - start)
             raise RuntimeError(str(operation.error))
 
         task['message'] = 'Downloading video...'
         task['progress'] = 95
 
         if not self._save_video(operation, output_path):
+            hm.record(task['id'], prompt, model, model_id, duration, task.get('mode', 'short'),
+                      aspect_ratio, 'error', time.time() - start)
             raise RuntimeError("No video data received")
 
+        elapsed = time.time() - start
         task['output_path'] = output_path
         task['status'] = 'completed'
         task['progress'] = 100
         task['message'] = 'Complete!'
+        hm.record(task['id'], prompt, model, model_id, duration, task.get('mode', 'short'),
+                  aspect_ratio, 'completed', elapsed)
 
     # ----------------------------------------------------------
     # 视频延长（官方 SDK）
@@ -150,8 +159,10 @@ class VeoGenerator:
                         image_path: str = None,
                         negative_prompt: str = None, enhance_prompt: bool = False):
         """基于已有视频/图片延长生成"""
+        from services import history_manager as hm
         model_id = self._resolve_model(model)
         client = get_client()
+        start = time.time()
 
         task['status'] = 'running'
         task['message'] = 'Sending request...'
@@ -183,20 +194,29 @@ class VeoGenerator:
         operation, _ = self._poll_operation(client, operation, task, 'Extending')
 
         if operation.done is not True:
+            hm.record(task['id'], prompt, model, model_id, duration, 'extend',
+                      aspect_ratio, 'error', time.time() - start)
             raise RuntimeError("Generation timeout")
         if operation.error:
+            hm.record(task['id'], prompt, model, model_id, duration, 'extend',
+                      aspect_ratio, 'error', time.time() - start)
             raise RuntimeError(str(operation.error))
 
         task['message'] = 'Downloading video...'
         task['progress'] = 95
 
         if not self._save_video(operation, output_path):
+            hm.record(task['id'], prompt, model, model_id, duration, 'extend',
+                      aspect_ratio, 'error', time.time() - start)
             raise RuntimeError("No video data received")
 
+        elapsed = time.time() - start
         task['output_path'] = output_path
         task['status'] = 'completed'
         task['progress'] = 100
         task['message'] = 'Complete!'
+        hm.record(task['id'], prompt, model, model_id, duration, 'extend',
+                  aspect_ratio, 'completed', elapsed)
 
     # ----------------------------------------------------------
     # 长视频拼接
@@ -207,8 +227,10 @@ class VeoGenerator:
                       output_path: str, reference_image: str = None,
                       negative_prompt: str = None, enhance_prompt: bool = False):
         """分段生成 + ffmpeg 拼接长视频"""
+        from services import history_manager as hm
         model_id = self._resolve_model(model)
         client = get_client()
+        start = time.time()
         num_segments = (total_seconds + SEGMENT_DURATION - 1) // SEGMENT_DURATION
 
         task['message'] = f'Long video: {num_segments} segments needed'
@@ -233,7 +255,6 @@ class VeoGenerator:
                 enhance_prompt=enhance_prompt,
             )
 
-            # 设置参考图
             try:
                 if i == 0 and reference_image and os.path.exists(reference_image):
                     source.image = types.Image.from_file(location=reference_image)
@@ -247,24 +268,25 @@ class VeoGenerator:
             )
 
             operation, _ = self._poll_operation(
-                client, operation, task,
-                f'Segment {i+1}/{num_segments}',
+                client, operation, task, f'Segment {i+1}/{num_segments}',
             )
 
             if operation.done is not True or not operation.response:
+                hm.record(task['id'], prompt, model, model_id, total_seconds, 'long',
+                          aspect_ratio, 'error', time.time() - start)
                 raise RuntimeError(f"Segment {i+1} failed")
 
-            # 保存分段
             segment_path = OUTPUT_FOLDER / f"{task['id']}_seg_{i:03d}.mp4"
             video = operation.response.generated_videos[0].video
             if not video.video_bytes:
+                hm.record(task['id'], prompt, model, model_id, total_seconds, 'long',
+                          aspect_ratio, 'error', time.time() - start)
                 raise RuntimeError(f"Segment {i+1} no data")
 
             with open(segment_path, 'wb') as f:
                 f.write(video.video_bytes)
             segment_files.append(str(segment_path))
 
-            # 提取最后一帧
             if CV2_AVAILABLE:
                 try:
                     cap = cv2.VideoCapture(str(segment_path))
@@ -281,7 +303,6 @@ class VeoGenerator:
                 except Exception as e:
                     task['message'] = f'Segment {i+1} done, frame extract failed: {e}'
 
-        # 拼接
         task['message'] = 'Concatenating segments...'
         task['progress'] = 90
 
@@ -295,10 +316,14 @@ class VeoGenerator:
             '-i', str(concat_file), '-c', 'copy', output_path,
         ], check=True, capture_output=True)
 
-        # 清理临时文件
         for seg in segment_files:
             try:
                 os.remove(seg)
+            except OSError:
+                pass
+        for frame_file in OUTPUT_FOLDER.glob(f"{task['id']}_last_frame_*.jpg"):
+            try:
+                os.remove(frame_file)
             except OSError:
                 pass
         try:
@@ -306,7 +331,10 @@ class VeoGenerator:
         except OSError:
             pass
 
+        elapsed = time.time() - start
         task['output_path'] = output_path
         task['status'] = 'completed'
         task['progress'] = 100
         task['message'] = 'Complete!'
+        hm.record(task['id'], prompt, model, model_id, total_seconds, 'long',
+                  aspect_ratio, 'completed', elapsed)

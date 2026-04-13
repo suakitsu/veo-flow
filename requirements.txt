@@ -4,3 +4,4 @@ google-genai==0.3.0
 requests==2.31.0
 Pillow==10.1.0
 opencv-python==4.8.1.78
+gtts>=2.5.0

@@ -37,7 +37,7 @@ TEMPLATES_FILE = Path(__file__).parent / 'templates.json'
 
 def _load_templates():
     if TEMPLATES_FILE.exists():
-        with open(TEMPLATES_FILE, 'r', encoding='utf-8') as f:
+        with open(TEMPLATES_FILE, 'r', encoding='utf-8-sig') as f:
             return json.load(f)
     return {"categories": []}
 

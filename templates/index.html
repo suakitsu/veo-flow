@@ -116,15 +116,12 @@
         .tabs-wrap {
             border-bottom: 1px solid var(--border);
             padding: 0 24px;
-            overflow-x: auto;
-            scrollbar-width: none;
         }
-        .tabs-wrap::-webkit-scrollbar { display: none; }
 
         .tabs {
             display: flex;
             gap: 0;
-            white-space: nowrap;
+            flex-wrap: wrap;
         }
 
         .tab {

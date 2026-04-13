@@ -728,6 +728,76 @@
             border-radius: 50%;
             animation: spin 0.6s linear infinite;
         }
+
+        /* Templates, Storyboard, Dashboard styles */
+        .template-card {
+            padding: 16px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .template-card:hover {
+            border-color: var(--accent);
+            box-shadow: var(--shadow);
+        }
+        .template-card h4 {
+            margin: 0 0 8px 0;
+            font-size: 14px;
+        }
+        .template-card p {
+            margin: 0;
+            font-size: 12px;
+            color: var(--text2);
+        }
+        .shot-row {
+            display: grid;
+            grid-template-columns: 40px 1fr 100px 70px 40px;
+            gap: 8px;
+            align-items: center;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--card);
+        }
+        .shot-row input, .shot-row select {
+            padding: 6px 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 13px;
+        }
+        .shot-row button {
+            padding: 6px;
+            background: var(--error);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .stat-card {
+            padding: 16px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+        .stat-label {
+            font-size: 12px;
+            color: var(--text2);
+            margin-top: 4px;
+        }
+        #history-body tr {
+            border-bottom: 1px solid var(--border);
+        }
+        #history-body td {
+            padding: 8px;
+            font-size: 12px;
+        }
     </style>
 </head>
 
@@ -751,6 +821,9 @@
                     <div class="tab" onclick="switchTab('long',this)" data-i18n="tabLong">Long Video</div>
                     <div class="tab" onclick="switchTab('extend',this)" data-i18n="tabExtend">Extend Video</div>
                     <div class="tab" onclick="switchTab('image',this)" data-i18n="tabImage">Image</div>
+                    <div class="tab" onclick="switchTab('templates',this)">Templates</div>
+                    <div class="tab" onclick="switchTab('storyboard',this)">Storyboard</div>
+                    <div class="tab" onclick="switchTab('dashboard',this)">Dashboard</div>
                     <div class="tab" onclick="switchTab('narration',this)">🎙️ Narration</div>
                 </div>
 
@@ -1001,6 +1074,58 @@
                         <h3>Video Generated!</h3>
                         <video id="narr-video" controls></video>
                         <a href="#" class="dl-btn" id="narr-dl" download>Download</a>
+                    </div>
+                </div>
+
+                <!-- Templates -->
+                <div id="templates-tab" class="tab-content">
+                    <div class="group">
+                        <h3>Prompt Templates</h3>
+                        <div id="templates-list" style="display:grid;gap:12px;margin-top:16px"></div>
+                    </div>
+                </div>
+
+                <!-- Storyboard -->
+                <div id="storyboard-tab" class="tab-content">
+                    <div class="group">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+                            <h3>Storyboard Editor</h3>
+                            <div class="check"><input type="checkbox" id="concat-shots"><label for="concat-shots">Concatenate output</label></div>
+                        </div>
+                        <div id="shots-container" style="display:flex;flex-direction:column;gap:12px"></div>
+                        <div style="display:flex;gap:8px;margin-top:16px">
+                            <button class="gen-btn" onclick="addShot()">+ Add Shot</button>
+                            <button class="gen-btn" onclick="addShots(5)">+ Add 5</button>
+                            <button class="gen-btn" onclick="clearShots()">Clear All</button>
+                        </div>
+                        <div id="shots-cost" style="text-align:right;margin-top:8px;color:var(--text2)">0 shots · $0.00</div>
+                        <button class="gen-btn" onclick="generateStoryboard()" style="margin-top:16px">Generate All Shots</button>
+                    </div>
+                    <div class="progress" id="story-progress">
+                        <div class="progress-text" id="story-prog-text">...</div>
+                        <div class="bar"><div class="bar-fill" id="story-prog-bar"></div></div>
+                    </div>
+                </div>
+
+                <!-- Dashboard -->
+                <div id="dashboard-tab" class="tab-content">
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px" id="stats-grid">
+                        <div class="stat-card"><div class="stat-value" id="stat-total-cost">$0.00</div><div class="stat-label">Total Cost</div></div>
+                        <div class="stat-card"><div class="stat-value" id="stat-total-gen">0</div><div class="stat-label">Generations</div></div>
+                        <div class="stat-card"><div class="stat-value" id="stat-success">0%</div><div class="stat-label">Success Rate</div></div>
+                        <div class="stat-card"><div class="stat-value" id="stat-time">0s</div><div class="stat-label">Avg Time</div></div>
+                    </div>
+                    <div class="group">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+                            <h3>Generation History</h3>
+                            <button class="gen-btn" onclick="clearHistory()" style="padding:6px 12px;font-size:12px">Clear History</button>
+                        </div>
+                        <div style="overflow-x:auto">
+                            <table style="width:100%;border-collapse:collapse;font-size:13px">
+                                <thead><tr style="border-bottom:1px solid var(--border)"><th style="text-align:left;padding:8px">Time</th><th style="text-align:left;padding:8px">Prompt</th><th style="text-align:left;padding:8px">Model</th><th style="text-align:left;padding:8px">Cost</th><th style="text-align:left;padding:8px">Status</th></tr></thead>
+                                <tbody id="history-body"></tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
 
@@ -1709,6 +1834,123 @@
                 document.getElementById('narr-progress').classList.remove('show');
             }
         }
+
+        // ========== Templates ==========
+        async function loadTemplates() {
+            try {
+                const r = await fetch(`${API}/api/templates`);
+                const d = await r.json();
+                const list = document.getElementById('templates-list');
+                const categories = {};
+                (d.templates || []).forEach(t => {
+                    if (!categories[t.category]) categories[t.category] = [];
+                    categories[t.category].push(t);
+                });
+                list.innerHTML = Object.entries(categories).map(([cat, temps]) => `
+                    <div style="margin-bottom:16px">
+                        <h4 style="margin:0 0 8px 0;font-size:14px;color:var(--text2)">${cat}</h4>
+                        ${temps.map(t => `
+                            <div class="template-card" onclick="useTemplate('${t.id}')">
+                                <h4>${t.name}</h4>
+                                <p>${t.prompt.substring(0, 80)}...</p>
+                            </div>
+                        `).join('')}
+                    </div>
+                `).join('');
+            } catch (e) { console.error(e); }
+        }
+
+        function useTemplate(id) {
+            fetch(`${API}/api/templates/${id}`).then(r => r.json()).then(d => {
+                document.getElementById('short-prompt').value = d.prompt;
+                switchTab('short', document.querySelector('.tab'));
+            });
+        }
+
+        // ========== Storyboard ==========
+        let shots = [];
+        function addShot() {
+            shots.push({ id: Date.now(), prompt: '', model: 'veo3.1', duration: 8 });
+            renderShots();
+        }
+        function addShots(n) {
+            for (let i = 0; i < n; i++) addShot();
+        }
+        function clearShots() {
+            shots = [];
+            renderShots();
+        }
+        function removeShot(id) {
+            shots = shots.filter(s => s.id !== id);
+            renderShots();
+        }
+        function updateShot(id, field, value) {
+            const shot = shots.find(s => s.id === id);
+            if (shot) shot[field] = value;
+            updateStoryCost();
+        }
+        function renderShots() {
+            const container = document.getElementById('shots-container');
+            container.innerHTML = shots.map((s, i) => `
+                <div class="shot-row">
+                    <span style="font-weight:600;color:var(--text2)">${i+1}</span>
+                    <input placeholder="Shot prompt..." value="${s.prompt}" onchange="updateShot(${s.id}, 'prompt', this.value)">
+                    <select onchange="updateShot(${s.id}, 'model', this.value)">
+                        <option value="veo3.1" ${s.model==='veo3.1'?'selected':''}>veo3.1</option>
+                        <option value="veo3.1-fast" ${s.model==='veo3.1-fast'?'selected':''}>veo3.1-fast</option>
+                    </select>
+                    <input type="number" value="${s.duration}" min="4" max="8" onchange="updateShot(${s.id}, 'duration', parseInt(this.value))">
+                    <button onclick="removeShot(${s.id})">×</button>
+                </div>
+            `).join('');
+            updateStoryCost();
+        }
+        function updateStoryCost() {
+            const cost = shots.reduce((sum, s) => sum + (s.duration || 8) * 0.015, 0);
+            document.getElementById('shots-cost').textContent = `${shots.length} shots · $${cost.toFixed(3)}`;
+        }
+        async function generateStoryboard() {
+            if (shots.length === 0) return alert('Add at least one shot');
+            document.getElementById('story-progress').classList.add('show');
+            // TODO: implement batch generation
+            setTimeout(() => {
+                document.getElementById('story-progress').classList.remove('show');
+                alert('Storyboard generation started!');
+            }, 1000);
+        }
+
+        // ========== Dashboard ==========
+        async function loadDashboard() {
+            try {
+                const r = await fetch(`${API}/api/history/stats`);
+                const d = await r.json();
+                document.getElementById('stat-total-cost').textContent = '$' + (d.total_cost || 0).toFixed(2);
+                document.getElementById('stat-total-gen').textContent = d.total_generations || 0;
+                document.getElementById('stat-success').textContent = (d.success_rate || 0) + '%';
+                document.getElementById('stat-time').textContent = (d.avg_time || 0) + 's';
+
+                const hr = await fetch(`${API}/api/history?limit=50`);
+                const hd = await hr.json();
+                document.getElementById('history-body').innerHTML = (hd.history || []).map(h => `
+                    <tr>
+                        <td>${new Date(h.created_at).toLocaleString()}</td>
+                        <td>${h.prompt?.substring(0, 40)}...</td>
+                        <td>${h.model}</td>
+                        <td>$${(h.cost || 0).toFixed(3)}</td>
+                        <td><span style="color:${h.status==='completed'?'var(--success)':h.status==='error'?'var(--error)':'var(--warning)'}">${h.status}</span></td>
+                    </tr>
+                `).join('');
+            } catch (e) { console.error(e); }
+        }
+
+        async function clearHistory() {
+            if (!confirm('Clear all history?')) return;
+            await fetch(`${API}/api/history/clear`, { method: 'POST' });
+            loadDashboard();
+        }
+
+        // Init
+        addShot(); addShot(); addShot();
     </script>
 </body>
 

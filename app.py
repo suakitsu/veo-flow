@@ -29,13 +29,7 @@ def load_templates():
     if TEMPLATES_FILE.exists():
         with open(TEMPLATES_FILE, 'r', encoding='utf-8') as f:
             return json.load(f)
-    return {
-        "templates": [
-            {"id": "product-1", "name": "Product Showcase", "category": "Product", "prompt": "A premium {product} on a clean white background, professional studio lighting, commercial photography style, 4K quality"},
-            {"id": "nature-1", "name": "Sunrise Timelapse", "category": "Nature", "prompt": "Timelapse of sunrise over {location}, golden hour lighting, cinematic wide angle"},
-            {"id": "anime-1", "name": "Anime Street", "category": "Anime", "prompt": "Anime style, quiet Japanese street with cherry blossoms, {character} walking, soft pastel colors"}
-        ]
-    }
+    return {"categories": []}
 
 # 加载历史
 def load_history():

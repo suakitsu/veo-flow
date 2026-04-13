@@ -798,6 +798,15 @@
             padding: 8px;
             font-size: 12px;
         }
+        .menu-item {
+            padding: 10px 16px;
+            cursor: pointer;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+        .menu-item:hover {
+            background: var(--accent-glow);
+        }
     </style>
 </head>
 
@@ -821,10 +830,14 @@
                     <div class="tab" onclick="switchTab('long',this)" data-i18n="tabLong">Long Video</div>
                     <div class="tab" onclick="switchTab('extend',this)" data-i18n="tabExtend">Extend Video</div>
                     <div class="tab" onclick="switchTab('image',this)" data-i18n="tabImage">Image</div>
-                    <div class="tab" onclick="switchTab('templates',this)" data-i18n="templates">Templates</div>
-                    <div class="tab" onclick="switchTab('storyboard',this)" data-i18n="storyboard">Storyboard</div>
-                    <div class="tab" onclick="switchTab('dashboard',this)" data-i18n="dashboard">Dashboard</div>
                     <div class="tab" onclick="switchTab('narration',this)" data-i18n="narration">🎙️ Narration</div>
+                    <div class="tab" onclick="toggleMoreMenu()" style="position:relative">⋮ More
+                        <div id="more-menu" style="display:none;position:absolute;top:100%;left:0;background:var(--card);border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow-lg);z-index:100;min-width:120px">
+                            <div class="menu-item" onclick="switchTab('templates',this);hideMoreMenu()" data-i18n="templates">Templates</div>
+                            <div class="menu-item" onclick="switchTab('storyboard',this);hideMoreMenu()" data-i18n="storyboard">Storyboard</div>
+                            <div class="menu-item" onclick="switchTab('dashboard',this);hideMoreMenu()" data-i18n="dashboard">Dashboard</div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Short Video -->
@@ -1891,36 +1904,44 @@
             }
         }
 
+        // More menu
+        function toggleMoreMenu() {
+            const menu = document.getElementById('more-menu');
+            menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+        }
+        function hideMoreMenu() {
+            document.getElementById('more-menu').style.display = 'none';
+        }
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.tab')) hideMoreMenu();
+        });
+
         // ========== Templates ==========
         async function loadTemplates() {
             try {
                 const r = await fetch(`${API}/api/templates`);
                 const d = await r.json();
                 const list = document.getElementById('templates-list');
-                const categories = {};
-                (d.templates || []).forEach(t => {
-                    if (!categories[t.category]) categories[t.category] = [];
-                    categories[t.category].push(t);
-                });
-                list.innerHTML = Object.entries(categories).map(([cat, temps]) => `
-                    <div style="margin-bottom:16px">
-                        <h4 style="margin:0 0 8px 0;font-size:14px;color:var(--text2)">${cat}</h4>
-                        ${temps.map(t => `
-                            <div class="template-card" onclick="useTemplate('${t.id}')">
-                                <h4>${t.name}</h4>
-                                <p>${t.prompt.substring(0, 80)}...</p>
-                            </div>
-                        `).join('')}
+                list.innerHTML = (d.categories || []).map(cat => `
+                    <div style="margin-bottom:20px">
+                        <h4 style="margin:0 0 12px 0;font-size:14px;color:var(--text)">${cat.icon} ${cat.name}</h4>
+                        <div style="display:grid;gap:8px">
+                            ${cat.templates.map(t => `
+                                <div class="template-card" onclick="useTemplate('${t.name}', '${t.prompt.replace(/'/g, "\\'")}')">
+                                    <h4 style="margin:0 0 4px 0;font-size:13px">${t.name}</h4>
+                                    <p style="margin:0;font-size:11px;color:var(--text2)">${t.prompt.substring(0, 60)}...</p>
+                                    <div style="margin-top:8px;font-size:11px;color:var(--accent)">${t.model} · ${t.duration}s · ${t.ratio}</div>
+                                </div>
+                            `).join('')}
+                        </div>
                     </div>
                 `).join('');
             } catch (e) { console.error(e); }
         }
 
-        function useTemplate(id) {
-            fetch(`${API}/api/templates/${id}`).then(r => r.json()).then(d => {
-                document.getElementById('short-prompt').value = d.prompt;
-                switchTab('short', document.querySelector('.tab'));
-            });
+        function useTemplate(name, prompt) {
+            document.getElementById('short-prompt').value = prompt;
+            switchTab('short', document.querySelector('.tab'));
         }
 
         // ========== Storyboard ==========

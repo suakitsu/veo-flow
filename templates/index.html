@@ -1459,7 +1459,7 @@ if (savedTheme) document.body.dataset.theme = savedTheme;
 // ─────────────────────────────────────────────────────────────────────────────
 // State
 // ─────────────────────────────────────────────────────────────────────────────
-const API = '';
+const API = 'http://127.0.0.1:5000';
 let dur = 8, extendDur = 8, mode = 'short', taskId = null, pollTimer = null, aiStyle = 'cinematic';
 let extendFile = null, extendFileType = null;
 
@@ -2066,12 +2066,17 @@ async function manualNarrate() {
 // Templates
 // ─────────────────────────────────────────────────────────────────────────────
 async function loadTemplates() {
+    const list = document.getElementById('templates-list');
+    list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2)"><span class="spinner"></span> Loading templates...</div>';
     try {
-        const r = await fetch(`${API}/api/templates`);
+        const r = await fetch((API || '') + '/api/templates');
         const d = await r.json();
-        const list = document.getElementById('templates-list');
-        list.innerHTML = (d.categories || []).map(cat => `
-            <div style="margin-bottom:20px">
+        if (!d.categories || d.categories.length === 0) {
+            list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2)">No templates found in templates.json</div>';
+            return;
+        }
+        list.innerHTML = d.categories.map(cat => `
+            <div style="margin-bottom:24px">
                 <div class="tpl-cat-title">${cat.icon || ''} ${cat.name}</div>
                 <div class="tpl-grid">
                     ${(cat.templates || []).map(t => `
@@ -2084,7 +2089,10 @@ async function loadTemplates() {
                 </div>
             </div>
         `).join('');
-    } catch (e) { console.error(e); }
+    } catch (e) { 
+        list.innerHTML = `<div style="text-align:center;padding:40px;color:var(--error)">Error loading templates: ${e.message}</div>`;
+        console.error(e); 
+    }
 }
 
 function useTemplate(prompt) {

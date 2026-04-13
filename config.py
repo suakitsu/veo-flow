@@ -59,6 +59,12 @@ proxy_config = {
     'address': os.getenv('HTTP_PROXY', 'http://127.0.0.1:7897'),
 }
 
+# API 配置（用于 API Key 模式，如 xiaomimimo）
+api_config = {
+    'api_key': '',
+    'base_url': 'https://api.xiaomimimo.com-NO-DEFAULT', # 实际上默认留空由 SDK 处理
+}
+
 
 def init_env():
     """初始化环境变量：代理、凭证、项目 ID"""
@@ -71,10 +77,16 @@ def init_env():
         with open(CONFIG_FILE, 'r') as f:
             cfg = json.load(f)
             os.environ['GCP_PROJECT_ID'] = cfg.get('project_id', '')
+            
+            # 模式 A：服务号 JSON 文件
             cred_path = cfg.get('credentials', '')
             if cred_path and not os.path.isabs(cred_path):
                 cred_path = str(BASE_DIR / cred_path)
             os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = cred_path
+            
+            # 模式 B：API Key 模式 (如 xiaomimimo)
+            api_config['api_key'] = cfg.get('api_key', '')
+            api_config['base_url'] = cfg.get('api_base_url', '')
 
     # 确保目录存在
     UPLOAD_FOLDER.mkdir(exist_ok=True)

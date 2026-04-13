@@ -1115,6 +1115,7 @@
                             <label data-i18n="ttsEngine">TTS Engine</label>
                             <select id="narr-engine" onchange="onNarrEngineChange()">
                                 <option value="mimo">MiMo / gTTS (Free)</option>
+                                <option value="openai">OpenAI / XiaomiMimo (SK-Key)</option>
                                 <option value="gemini">Google Cloud TTS</option>
                             </select>
                         </div>
@@ -1905,9 +1906,13 @@ function setNarrMode(m, el) {
 function onNarrEngineChange() {
     const engine = document.getElementById('narr-engine').value;
     const sel = document.getElementById('narr-voice');
-    sel.innerHTML = engine === 'gemini'
-        ? '<option>Kore</option><option>Puck</option><option>Charon</option><option>Fenrir</option>'
-        : '<option value="mimo_default">MiMo Default</option><option value="default_zh">Chinese Female</option><option value="default_en">English Female</option>';
+    if (engine === 'gemini') {
+        sel.innerHTML = '<option>Kore</option><option>Puck</option><option>Charon</option><option>Fenrir</option>';
+    } else if (engine === 'openai') {
+        sel.innerHTML = '<option value="alloy">Alloy (Balanced)</option><option value="echo">Echo (Warm)</option><option value="fable">Fable (British)</option><option value="onyx">Onyx (Deep)</option><option value="nova">Nova (Bright)</option><option value="shimmer">Shimmer (Clear)</option>';
+    } else {
+        sel.innerHTML = '<option value="mimo_default">MiMo Default</option><option value="default_zh">Chinese Female</option><option value="default_en">English Female</option>';
+    }
 }
 
 function onNarrDurUnitChange() {

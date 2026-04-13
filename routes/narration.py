@@ -57,6 +57,38 @@ def _tts_gemini(text: str, output_path: str, voice: str = 'Kore') -> bool:
         return _tts_gtts(text, output_path)
 
 
+def _tts_openai(text: str, output_path: str, voice: str = 'alloy') -> bool:
+    """使用 OpenAI 兼容的 TTS API (适用于 xiaomimimo 等中转)"""
+    try:
+        import requests
+        from config import api_config
+        key = api_config.get('api_key')
+        base = api_config.get('base_url') or 'https://api.xiaomimimo.com/v1'
+        if not key:
+            return False
+            
+        url = f"{base.rstrip('/')}/audio/speech"
+        headers = {
+            "Authorization": f"Bearer {key}",
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "model": "tts-1",
+            "input": text,
+            "voice": voice if voice else "alloy"
+        }
+        
+        response = requests.post(url, json=payload, headers=headers, timeout=30)
+        response.raise_for_status()
+        
+        with open(output_path, 'wb') as f:
+            f.write(response.content)
+        return True
+    except Exception as e:
+        print(f"[Narration] OpenAI TTS error: {e}")
+        return False
+
+
 def _create_slideshow(image_paths: list, audio_path: str, output_path: str,
                       duration_per_image: float = None) -> bool:
     """
@@ -243,7 +275,9 @@ def create_narration():
 
     # TTS
     audio_path = str(OUTPUT_FOLDER / f"narr_{task_id}_audio.mp3")
-    if engine == 'gemini':
+    if engine == 'openai':
+        ok = _tts_openai(text, audio_path, voice)
+    elif engine == 'gemini':
         ok = _tts_gemini(text, audio_path, voice)
     else:
         ok = _tts_gtts(text, audio_path, lang)

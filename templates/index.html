@@ -1418,9 +1418,23 @@
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             el.classList.add('active');
             document.getElementById(m + '-tab').classList.add('active');
-            document.getElementById('ref-group').style.display = (m === 'image' || m === 'extend') ? 'none' : 'block';
-            const btnText = m === 'image' ? (lang === 'zh' ? '生成图像' : 'Generate Image') : m === 'extend' ? (lang === 'zh' ? '延长视频' : 'Extend Video') : (lang === 'zh' ? '生成视频' : 'Generate Video');
-            document.getElementById('gen-btn').textContent = btnText;
+            
+            // Hide shared elements for templates/storyboard/dashboard
+            const sharedElements = ['ref-group', 'gen-btn', 'progress', 'result'];
+            const hideShared = ['templates', 'storyboard', 'dashboard'].includes(m);
+            sharedElements.forEach(id => {
+                document.getElementById(id).style.display = hideShared ? 'none' : 'block';
+            });
+            
+            if (!hideShared) {
+                document.getElementById('ref-group').style.display = (m === 'image' || m === 'extend') ? 'none' : 'block';
+                const btnText = m === 'image' ? (lang === 'zh' ? '生成图像' : 'Generate Image') : m === 'extend' ? (lang === 'zh' ? '延长视频' : 'Extend Video') : m === 'narration' ? '🚀 ' + (lang === 'zh' ? '一键生成' : 'One-Click') : (lang === 'zh' ? '生成视频' : 'Generate Video');
+                document.getElementById('gen-btn').textContent = btnText;
+            }
+            
+            // Load data for specific tabs
+            if (m === 'templates') loadTemplates();
+            if (m === 'dashboard') loadDashboard();
         }
 
         // Pills

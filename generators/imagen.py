@@ -23,12 +23,16 @@ class ImagenGenerator:
         task['message'] = 'Sending image request...'
         task['progress'] = 10
 
-        config = types.GenerateImagesConfig(
-            number_of_images=1,
-            aspect_ratio=aspect_ratio,
-            negative_prompt=negative_prompt if negative_prompt else None,
-            enhance_prompt=enhance_prompt,
-        )
+        config_args = {
+            'number_of_images': 1,
+            'aspect_ratio': aspect_ratio,
+        }
+        if negative_prompt:
+            config_args['negative_prompt'] = negative_prompt
+        if enhance_prompt:
+            config_args['enhance_prompt'] = True
+            
+        config = types.GenerateImagesConfig(**config_args)
 
         task['message'] = 'Generating image...'
         task['progress'] = 40

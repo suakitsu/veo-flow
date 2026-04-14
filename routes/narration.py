@@ -35,7 +35,13 @@ def _tts_gemini(text: str, output_path: str, voice: str = 'Kore') -> bool:
     """使用 Gemini TTS（google-cloud-texttospeech）生成音频"""
     try:
         from google.cloud import texttospeech
+        import traceback
+        
+        print(f"[Gemini TTS] Starting with text: {text[:20]}...")
+        
         client = texttospeech.TextToSpeechClient()
+        print("[Gemini TTS] Client created")
+        
         synthesis_input = texttospeech.SynthesisInput(text=text)
         voice_params = texttospeech.VoiceSelectionParams(
             language_code='cmn-CN',
@@ -44,110 +50,211 @@ def _tts_gemini(text: str, output_path: str, voice: str = 'Kore') -> bool:
         audio_config = texttospeech.AudioConfig(
             audio_encoding=texttospeech.AudioEncoding.MP3,
         )
+        print("[Gemini TTS] Sending request...")
+        
         response = client.synthesize_speech(
             input=synthesis_input,
             voice=voice_params,
             audio_config=audio_config,
         )
+        print(f"[Gemini TTS] Response received, audio size: {len(response.audio_content)} bytes")
+        
         with open(output_path, 'wb') as f:
             f.write(response.audio_content)
+        print(f"[Gemini TTS] Audio saved to {output_path}")
         return True
     except Exception as e:
+        print(f"[Gemini TTS] Error: {e}")
+        print(f"[Gemini TTS] Traceback: {traceback.format_exc()}")
         print(f"[Narration] Gemini TTS error: {e}, falling back to gTTS")
         return _tts_gtts(text, output_path)
 
 
 def _tts_openai(text: str, output_path: str, voice: str = 'alloy') -> bool:
-    """使用 OpenAI 兼容的 TTS API (适用于 xiaomimimo 等中转)"""
+    """使用 MiMo TTS API"""
     try:
         import requests
-        from config import api_config
-        key = api_config.get('api_key')
-        base = api_config.get('base_url') or 'https://api.xiaomimimo.com/v1'
+        import base64
+        import json
+        import datetime
+        
+        # 写入日志文件
+        with open('tts_debug.log', 'a', encoding='utf-8') as log:
+            log.write(f"\n[{datetime.datetime.now()}]\n")
+            log.write(f"Received text: {text!r}\n")
+            log.write(f"Text length: {len(text)}\n")
+            log.write(f"Text bytes: {text.encode('utf-8')!r}\n")
+        
+        print(f"[_tts_openai] Received text: {text!r}")
+        print(f"[_tts_openai] Text length: {len(text)}")
+        print(f"[_tts_openai] Text bytes: {text.encode('utf-8')!r}")
+        
+        # 直接从 config.json 读取，避免线程问题
+        with open('config.json', 'r') as f:
+            cfg = json.load(f)
+            key = cfg.get('api_key', '')
+            base = cfg.get('api_base_url', 'https://api.xiaomimimo.com/v1')
+        
+        print(f"[TTS Debug] api_key present: {bool(key)}, base_url: {base}")
         if not key:
+            print("[TTS Debug] No API key!")
             return False
             
-        url = f"{base.rstrip('/')}/audio/speech"
+        url = f"{base.rstrip('/')}/chat/completions"
+        
+        # MiMo TTS 使用 api-key header 和特殊格式
         headers = {
-            "Authorization": f"Bearer {key}",
+            "api-key": key,
             "Content-Type": "application/json"
         }
+        
+        # 映射 voice 到 MiMo 音色
+        voice_map = {
+            'alloy': 'mimo_default',
+            'zh': 'default_zh',
+            'en': 'default_eh'
+        }
+        mimo_voice = voice_map.get(voice, voice) if voice else 'mimo_default'
+        
         payload = {
-            "model": "tts-1",
-            "input": text,
-            "voice": voice if voice else "alloy"
+            "model": "mimo-v2-tts",
+            "messages": [
+                {"role": "user", "content": "Hello"},
+                {"role": "assistant", "content": text}
+            ],
+            "audio": {
+                "format": "wav",
+                "voice": mimo_voice
+            }
         }
         
         response = requests.post(url, json=payload, headers=headers, timeout=30)
         response.raise_for_status()
         
-        with open(output_path, 'wb') as f:
-            f.write(response.content)
-        return True
+        # 解析 JSON 响应，提取音频数据
+        data = response.json()
+        if 'choices' in data and len(data['choices']) > 0:
+            msg = data['choices'][0].get('message', {})
+            if 'audio' in msg and 'data' in msg['audio']:
+                audio_data = base64.b64decode(msg['audio']['data'])
+                with open(output_path, 'wb') as f:
+                    f.write(audio_data)
+                return True
+        
+        print(f"[Narration] MiMo TTS: no audio data in response, msg keys: {msg.keys()}")
+        return False
     except Exception as e:
-        print(f"[Narration] OpenAI TTS error: {e}")
+        print(f"[Narration] MiMo TTS error: {e}")
+        import traceback
+        traceback.print_exc()
         return False
 
 
 def _create_slideshow(image_paths: list, audio_path: str, output_path: str,
                       duration_per_image: float = None) -> bool:
     """
-    用 ffmpeg 将图片列表 + 音频 合成为幻灯片视频
-    duration_per_image: None 则根据音频时长均分
+    将图片列表 + 音频 合成为幻灯片视频
+    使用 imageio 生成视频，imageio-ffmpeg 合并音频
     """
     try:
-        # 获取音频时长
-        probe = subprocess.run(
-            ['ffprobe', '-v', 'error', '-show_entries', 'format=duration',
-             '-of', 'default=noprint_wrappers=1:nokey=1', audio_path],
-            capture_output=True, text=True,
-        )
-        audio_dur = float(probe.stdout.strip()) if probe.returncode == 0 else 30.0
+        import imageio
+        import numpy as np
+        from PIL import Image
+        import os
+        import subprocess
+        from imageio_ffmpeg import get_ffmpeg_exe
+
+        # 获取音频时长（支持 WAV 和 MP3）
+        audio_dur = 0
+        if audio_path.endswith('.wav'):
+            import wave
+            with wave.open(audio_path, 'rb') as w:
+                audio_dur = w.getnframes() / w.getframerate()
+        elif audio_path.endswith('.mp3'):
+            # 使用 ffprobe 获取 MP3 时长
+            import subprocess
+            import re
+            result = subprocess.run([
+                get_ffmpeg_exe(), '-i', audio_path
+            ], capture_output=True, text=True)
+            # 从 stderr 解析时长
+            duration_match = re.search(r'Duration: (\d+):(\d+):(\d+\.\d+)', result.stderr)
+            if duration_match:
+                h, m, s = map(float, duration_match.groups())
+                audio_dur = h * 3600 + m * 60 + s
+            else:
+                # 默认时长
+                audio_dur = 5.0
+        else:
+            # 默认时长
+            audio_dur = 5.0
 
         if duration_per_image is None:
             duration_per_image = max(audio_dur / len(image_paths), 2.0)
 
-        # 写 concat 文件
-        concat_path = str(OUTPUT_FOLDER / f"narr_{uuid.uuid4().hex[:6]}_concat.txt")
-        with open(concat_path, 'w') as f:
-            for img in image_paths:
-                f.write(f"file '{img}'\n")
-                f.write(f"duration {duration_per_image:.2f}\n")
-            # 最后一帧重复（ffmpeg concat 需要）
-            if image_paths:
-                f.write(f"file '{image_paths[-1]}'\n")
-
-        # 生成幻灯片视频（无音频）
-        slideshow_path = str(OUTPUT_FOLDER / f"narr_{uuid.uuid4().hex[:6]}_slide.mp4")
+        # 创建视频（无声）
+        fps = 24
+        total_frames = int(audio_dur * fps)
+        frames_per_image = int(duration_per_image * fps)
+        
+        # 准备帧
+        frames = []
+        for img_path in image_paths:
+            if os.path.exists(img_path):
+                # 打开图片并调整大小
+                img = Image.open(img_path)
+                if img.mode != 'RGB':
+                    img = img.convert('RGB')
+                # 调整大小为 1280x720
+                img = img.resize((1280, 720), Image.Resampling.LANCZOS)
+                # 添加黑色背景
+                bg = Image.new('RGB', (1280, 720), (0, 0, 0))
+                # 居中粘贴
+                x = (1280 - img.width) // 2
+                y = (720 - img.height) // 2
+                bg.paste(img, (x, y))
+                
+                # 转换为 numpy 数组
+                frame = np.array(bg)
+                # 重复帧以达到每张图片的时长
+                for _ in range(frames_per_image):
+                    frames.append(frame)
+        
+        if not frames:
+            print("[Narration] No frames created")
+            return False
+        
+        # 截断到音频时长
+        frames = frames[:total_frames]
+        
+        # 保存无声视频
+        temp_video = output_path.replace('.mp4', '_silent.mp4')
+        imageio.mimsave(temp_video, frames, fps=fps, quality=8)
+        
+        # 使用 imageio-ffmpeg 合并视频和音频
+        ffmpeg = get_ffmpeg_exe()
         subprocess.run([
-            'ffmpeg', '-y', '-f', 'concat', '-safe', '0',
-            '-i', concat_path,
-            '-vf', 'scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2',
-            '-pix_fmt', 'yuv420p',
-            '-r', '24',
-            slideshow_path,
-        ], check=True, capture_output=True)
-
-        # 合并音频
-        subprocess.run([
-            'ffmpeg', '-y',
-            '-i', slideshow_path,
+            ffmpeg, '-y',
+            '-i', temp_video,
             '-i', audio_path,
-            '-c:v', 'copy', '-c:a', 'aac',
+            '-c:v', 'copy',
+            '-c:a', 'aac',
+            '-b:a', '192k',
             '-shortest',
-            output_path,
+            output_path
         ], check=True, capture_output=True)
-
+        
         # 清理临时文件
-        for tmp in [concat_path, slideshow_path]:
-            try:
-                os.remove(tmp)
-            except OSError:
-                pass
-
+        try:
+            os.remove(temp_video)
+        except:
+            pass
+        
         return True
     except Exception as e:
         print(f"[Narration] slideshow error: {e}")
+        import traceback
+        traceback.print_exc()
         return False
 
 
@@ -240,7 +347,8 @@ def ai_image():
         out_path = str(UPLOAD_FOLDER / filename)
 
         gen = ImagenGenerator()
-        gen.generate(task, prompt, 'imagen-3.0-fast-generate-001', '16:9', out_path)
+        # 使用 imagen-3.0-generate-002 模型（支持 enhance_prompt）
+        gen.generate(task, prompt, 'imagen-3.0-generate-002', '16:9', out_path)
 
         return jsonify({
             'filename': filename,
@@ -261,7 +369,13 @@ def create_narration():
     text = data.get('text', '').strip()
     images = data.get('images', [])   # list of filenames in UPLOAD_FOLDER
     voice = data.get('voice', 'mimo_default')
-    engine = data.get('engine', 'mimo')
+    engine = data.get('engine', 'openai')  # 默认使用 MiMo TTS
+
+    # 调试信息
+    print(f"[TTS Debug] Raw request data: {request.get_data(as_text=True)!r}")
+    print(f"[TTS Debug] Parsed text: {text!r}")
+    print(f"[TTS Debug] Text type: {type(text)}")
+    print(f"[TTS Debug] Text bytes: {text.encode('utf-8')!r}")
 
     if not text:
         return jsonify({'error': 'Text is required'}), 400
@@ -269,12 +383,18 @@ def create_narration():
         return jsonify({'error': 'At least one image is required'}), 400
 
     task_id = uuid.uuid4().hex[:10]
+    
+    print(f"[TTS Debug] Received text: {text!r}")
+    print(f"[TTS Debug] Text length: {len(text)}")
+    print(f"[TTS Debug] Text bytes: {text.encode('utf-8')!r}")
 
     # 解析语言
     lang = 'zh' if any(ord(c) > 127 for c in text) else 'en'
 
     # TTS
-    audio_path = str(OUTPUT_FOLDER / f"narr_{task_id}_audio.mp3")
+    # 根据引擎选择正确的音频格式扩展名
+    audio_ext = '.mp3' if engine == 'gemini' else '.wav'
+    audio_path = str(OUTPUT_FOLDER / f"narr_{task_id}_audio{audio_ext}")
     if engine == 'openai':
         ok = _tts_openai(text, audio_path, voice)
     elif engine == 'gemini':
@@ -300,11 +420,11 @@ def create_narration():
     output_path = str(OUTPUT_FOLDER / output_filename)
     success = _create_slideshow(image_paths, audio_path, output_path)
 
-    # 清理音频
-    try:
-        os.remove(audio_path)
-    except OSError:
-        pass
+    # 清理音频 - 临时禁用以便调试
+    # try:
+    #     os.remove(audio_path)
+    # except OSError:
+    #     pass
 
     if not success:
         return jsonify({'error': 'Video synthesis failed. Please check ffmpeg is installed.'}), 500

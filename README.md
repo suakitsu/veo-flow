@@ -26,8 +26,11 @@
 - **Long Video** — Auto-segmentation with frame-level continuity using frame-to-frame technology.
 - **Extend Video** — Upload any video/last frame, the AI continues the scene naturally.
 - **Narration (🎙️ NEW)** — Auto-mode (Topic to full video) or Manual-mode (Your photos + scripts).
+  - Supports **Gemini TTS** (emotional WaveNet voices) and **MiMo TTS** (Chinese optimized).
+  - Auto-segment long text for TTS compatibility.
 - **Storyboard (🎬 NEW)** — Multi-shot batch generation with auto-concatenation (FFmpeg).
 - **Dashboard (📊 NEW)** — Track cost, success rates, and full generation history.
+- **AI Image Generation (🖼️ NEW)** — Imagen 3 integration for custom images.
 - **AI Assistant** — Image analysis, prompt refinement, creative chat with Gemini.
 - **Prompt Templates** — 19+ Pro templates for products, anime, landscapes, etc.
 
@@ -116,6 +119,39 @@ googleVideo/
 | `GET`  | `/api/templates` | List prompt templates |
 | `GET`  | `/api/task/<id>` | Get task status |
 | `POST` | `/api/analyze-image`| Analyze image with Gemini |
+
+## ⚙️ Configuration
+
+### TTS Engines
+
+| Engine | Requirements | Best For |
+|--------|-------------|----------|
+| `gemini` | GCP credentials (`vertex.json`) | Emotional voices, English |
+| `openai` | MiMo API key | Chinese text, no VPN needed |
+| `gtts` | Internet + gtts package | Fallback option |
+
+**Config example** (`config.json`):
+```json
+{
+  "project_id": "your-gcp-project",
+  "credentials": "vertex.json",
+  "api_key": "your-mimo-key",
+  "api_base_url": "https://api.xiaomimimo.com/v1"
+}
+```
+
+### PowerShell UTF-8 (Windows)
+
+For Chinese text support, set encoding before requests:
+```powershell
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding = [System.Text.Encoding]::UTF8
+```
+
+### TTS Character Limits
+
+- **MiMo TTS**: ~40-50 characters per request (auto-segmented for longer text)
+- **Gemini TTS**: Higher limits, better for English
 
 ## ⚙️ Proxy Configuration
 

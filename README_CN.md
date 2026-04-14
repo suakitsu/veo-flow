@@ -26,8 +26,11 @@
 - **长视频** — 自动分段，各段最后一帧与下一段首帧级衔接，保持一致性
 - **延长视频** — 上传视频/尾帧，AI原位续画
 - **文配视频 (🎙️ NEW)** — 自动模式（输入主题出成片） or 手动模式（自选素材+配音）
+  - 支持 **Gemini TTS**（情感 WaveNet 语音）和 **MiMo TTS**（中文优化）
+  - 长文本自动分段，适配 TTS 限制
 - **分镜编辑器 (🎬 NEW)** — 批量生成多个镜头，FFmpeg 自动合成
 - **数据大屏 (📊 NEW)** — 实时费用统计、成功率监控、完整历史记录
+- **AI生图 (🖼️ NEW)** — Imagen 3 集成，自定义图片生成
 - **AI助手** — 分析参考图、优化提示词、对话建议
 - **提示词模板** — 内置 19+ 套涵盖广告、动漫、风景、恐怖等专业模板
 
@@ -116,6 +119,39 @@ googleVideo/
 | `GET`  | `/api/templates` | 提示词模板列表 |
 | `GET`  | `/api/task/<id>` | 任务状态查询 |
 | `POST` | `/api/analyze-image`| Gemini 图片分析 |
+
+## 配置说明
+
+### TTS 引擎选择
+
+| 引擎 | 要求 | 适用场景 |
+|------|------|---------|
+| `gemini` | GCP 凭证 (`vertex.json`) | 情感语音，英文 |
+| `openai` | MiMo API key | 中文，无需翻墙 |
+| `gtts` | 网络 + gtts 包 | 备用方案 |
+
+**配置示例** (`config.json`):
+```json
+{
+  "project_id": "your-gcp-project",
+  "credentials": "vertex.json",
+  "api_key": "your-mimo-key",
+  "api_base_url": "https://api.xiaomimimo.com/v1"
+}
+```
+
+### PowerShell UTF-8 编码 (Windows)
+
+中文支持需要设置编码：
+```powershell
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding = [System.Text.Encoding]::UTF8
+```
+
+### TTS 字数限制
+
+- **MiMo TTS**: 每段约 40-50 汉字（长文本自动分段）
+- **Gemini TTS**: 限制更高，英文效果更好
 
 ## 代理配置
 

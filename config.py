@@ -131,6 +131,23 @@ api_config = {
 
 def init_env():
     """初始化环境变量：代理、凭证、项目 ID"""
+    # 加载 .env 文件（如果存在）
+    env_path = BASE_DIR / '.env'
+    if env_path.exists():
+        try:
+            with open(env_path, 'r', encoding='utf-8') as f:
+                for line in f:
+                    line = line.strip()
+                    if not line or line.startswith('#') or '=' not in line:
+                        continue
+                    key, _, value = line.partition('=')
+                    key, value = key.strip(), value.strip()
+                    # 不覆盖已存在的环境变量
+                    if key and key not in os.environ:
+                        os.environ[key] = value
+        except Exception:
+            pass
+
     # 设置代理（必须在导入 google.genai 之前）
     os.environ['HTTP_PROXY'] = os.getenv('HTTP_PROXY', 'http://127.0.0.1:7897')
     os.environ['HTTPS_PROXY'] = os.getenv('HTTPS_PROXY', 'http://127.0.0.1:7897')

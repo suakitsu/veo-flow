@@ -1,0 +1,20 @@
+# Docker
+.git
+.gitignore
+.github
+.vscode
+.idea
+__pycache__
+*.pyc
+venv/
+env/
+logs/
+uploads/
+outputs/
+tasks.json
+history.json
+*.operation.json
+tts_debug.log
+*.md
+docs/
+tests/

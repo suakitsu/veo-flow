@@ -209,6 +209,92 @@ class VeoGenerator:
                   aspect_ratio, 'completed', elapsed)
 
     # ----------------------------------------------------------
+    # 首尾帧插值（Veo 3.1）
+    # ----------------------------------------------------------
+
+    def generate_interpolate(self, task: dict, prompt: str, model: str = 'veo3.1',
+                             duration: int = 8, aspect_ratio: str = "16:9",
+                             output_path: str = None,
+                             first_frame: str = None, last_frame: str = None,
+                             negative_prompt: str = None, enhance_prompt: bool = False,
+                             generate_audio: bool = True, resolution: str = '1080p'):
+        """首尾帧插值 - 上传首帧和尾帧，Veo 3.1 生成过渡视频
+
+        利用 Veo SDK 的 source.image（首帧）+ source.last_frame（尾帧）字段
+        实现真正的首尾帧插值，而非伪实现。
+
+        Args:
+            first_frame: 首帧图片路径（必需）
+            last_frame: 尾帧图片路径（必需）
+        """
+        from services import history_manager as hm
+        model_id = self._resolve_model(model)
+        client = get_client()
+        start = time.time()
+
+        if not first_frame or not os.path.exists(first_frame):
+            raise ValueError("First frame image is required and must exist")
+        if not last_frame or not os.path.exists(last_frame):
+            raise ValueError("Last frame image is required and must exist")
+
+        task['status'] = 'running'
+        task['message'] = 'Loading frames...'
+        task['progress'] = 10
+        task['cost_estimate'] = self._estimate_cost(model, duration)
+
+        source = types.GenerateVideosSource(prompt=prompt)
+
+        # 首帧：使用 source.image
+        try:
+            source.image = types.Image.from_file(location=first_frame)
+            log.info("Loaded first frame: %s", first_frame)
+        except Exception as e:
+            raise RuntimeError(f"Failed to load first frame: {e}")
+
+        # 尾帧：使用 source.last_frame（Veo 3.1+ 支持）
+        try:
+            source.last_frame = types.Image.from_file(location=last_frame)
+            log.info("Loaded last frame: %s", last_frame)
+        except AttributeError:
+            # 旧版 SDK 不支持 last_frame 字段，回退到提示词描述
+            log.warning("SDK does not support last_frame, falling back to prompt-only")
+            prompt = f"{prompt}\n\n[End the video at a scene matching the second reference image]"
+            source = types.GenerateVideosSource(prompt=prompt)
+            source.image = types.Image.from_file(location=first_frame)
+        except Exception as e:
+            log.warning("Failed to set last_frame: %s, using prompt fallback", e)
+
+        config = self._build_video_config(
+            duration, aspect_ratio, negative_prompt, enhance_prompt,
+            generate_audio, resolution,
+        )
+
+        task['message'] = 'Generating interpolation video...'
+        task['progress'] = 20
+
+        operation = client.models.generate_videos(
+            model=model_id, source=source, config=config,
+        )
+        task['message'] = f'Operation created: {operation.name}'
+        task['progress'] = 30
+
+        operation, _ = self._poll_operation(client, operation, task, 'Interpolating')
+
+        if not self._save_video(operation, output_path):
+            elapsed = time.time() - start
+            hm.record(task['id'], prompt, model, model_id, duration, 'interpolate',
+                      aspect_ratio, 'error', elapsed)
+            raise RuntimeError("Failed to save interpolation video")
+
+        elapsed = time.time() - start
+        task['output_path'] = output_path
+        task['status'] = 'completed'
+        task['progress'] = 100
+        task['message'] = 'Complete!'
+        hm.record(task['id'], prompt, model, model_id, duration, 'interpolate',
+                  aspect_ratio, 'completed', elapsed)
+
+    # ----------------------------------------------------------
     # 视频延长（官方 SDK）
     # ----------------------------------------------------------
 

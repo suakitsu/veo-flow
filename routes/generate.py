@@ -284,16 +284,13 @@ def interpolate_frames():
     task['output_path'] = str(output_path)
     tm.lock_user(user_ip, task['id'])
 
-    # 使用首帧作为参考图，提示词中加入尾帧描述指令
-    # Veo SDK 目前通过 image 参数传入参考图
-    interp_prompt = f"{prompt}\n\n[Start from the provided image and transition to end at this description: {data.get('last_frame_desc', 'the second image')}]"
-
+    # 使用真正的首尾帧插值（Veo SDK source.last_frame）
     gen = VeoGenerator()
     tm.run_in_background(
-        gen.generate,
-        (task, interp_prompt, model, duration, ratio, str(output_path),
-         str(first_path), None, False,
-         generate_audio, resolution),
+        gen.generate_interpolate,
+        (task, prompt, model, duration, ratio, str(output_path),
+         str(first_path), str(last_path),
+         None, False, generate_audio, resolution),
         user_ip, task['id'],
     )
 

@@ -549,3 +549,75 @@ def create_narration():
         'video_url': f'/api/download/narr_{task_id}',
         'status': 'completed',
     })
+
+
+@bp.route('/narration/tts/multi-speaker', methods=['POST'])
+def tts_multi_speaker():
+    """
+    多说话人 Gemini TTS（对话/播客场景）
+
+    请求 JSON:
+    {
+        "text": "Host: Welcome to the show!\\nGuest: Thanks for having me.",
+        "speakers": {
+            "Host": "Kore",
+            "Guest": "Puck"
+        },
+        "model": "gemini-3.1-flash-tts"  // 可选
+    }
+
+    返回:
+    {
+        "audio_url": "/api/download/narr_tts_<id>",
+        "format": "wav"
+    }
+    """
+    import uuid
+    data = request.json or {}
+
+    speakers_text = data.get('text', '').strip()
+    speakers_map = data.get('speakers', {})
+
+    if not speakers_text:
+        return jsonify({'error': 'Text is required'}), 400
+    if not speakers_map or len(speakers_map) < 2:
+        return jsonify({'error': 'At least 2 speakers are required'}), 400
+
+    # 校验音色名
+    invalid_voices = [v for v in speakers_map.values() if v not in GEMINI_TTS_VOICES]
+    if invalid_voices:
+        return jsonify({
+            'error': f'Invalid voice(s): {invalid_voices}. Available: {GEMINI_TTS_VOICES[:8]}...',
+        }), 400
+
+    task_id = uuid.uuid4().hex[:10]
+    audio_path = str(OUTPUT_FOLDER / f"narr_tts_{task_id}.wav")
+
+    model = data.get('model')
+    ok = _tts_gemini_multi(speakers_text, audio_path, speakers_map, model)
+
+    if not ok:
+        return jsonify({'error': 'Multi-speaker TTS generation failed'}), 500
+
+    # 注册到 task_manager 以便下载
+    from services import task_manager as tm
+    fake_task = {
+        'id': f'narr_tts_{task_id}',
+        'mode': 'tts',
+        'prompt': speakers_text[:100],
+        'model': 'gemini-tts-multi',
+        'ratio': '',
+        'status': 'completed',
+        'progress': 100,
+        'message': 'Complete!',
+        'output_path': audio_path,
+        'created_at': __import__('datetime').datetime.now().isoformat(),
+    }
+    tm._tasks[f'narr_tts_{task_id}'] = fake_task
+
+    return jsonify({
+        'task_id': f'narr_tts_{task_id}',
+        'audio_url': f'/api/download/narr_tts_{task_id}',
+        'format': 'wav',
+        'status': 'completed',
+    })

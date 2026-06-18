@@ -182,14 +182,8 @@ def _tts_openai(text: str, output_path: str, voice: str = 'alloy') -> bool:
     try:
         import requests
         import base64
-        import datetime
 
-        with open('tts_debug.log', 'a', encoding='utf-8') as log:
-            log.write(f"\n[{datetime.datetime.now()}]\n")
-            log.write(f"Received text: {text!r}\n")
-            log.write(f"Text length: {len(text)}\n")
-
-        log.debug("MiMo TTS received text: %r", text)
+        log.debug("MiMo TTS received text: %r (len=%d)", text, len(text))
 
         with open('config.json', 'r') as f:
             cfg = json.load(f)

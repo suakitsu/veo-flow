@@ -928,6 +928,7 @@
                         <select id="short-model">
                             <option value="veo3.1">Veo 3.1</option>
                             <option value="veo3.1-fast">Veo 3.1 Fast</option>
+                            <option value="veo3.1-lite">Veo 3.1 Lite</option>
                             <option value="veo3">Veo 3</option>
                             <option value="veo2">Veo 2</option>
                         </select>
@@ -938,6 +939,23 @@
                             <option value="16:9">16:9 Landscape</option>
                             <option value="9:16">9:16 Portrait</option>
                         </select>
+                    </div>
+                </div>
+                <div class="row2">
+                    <div class="field">
+                        <label data-i18n="resolution">Resolution</label>
+                        <select id="short-resolution">
+                            <option value="720p">720p</option>
+                            <option value="1080p" selected>1080p</option>
+                            <option value="4K">4K (Veo 3.1)</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label data-i18n="audio">Native Audio</label>
+                        <div class="check-line" style="margin:0">
+                            <input type="checkbox" id="short-audio" checked>
+                            <label for="short-audio" data-i18n="generateAudio">Generate audio (Veo 3.1+)</label>
+                        </div>
                     </div>
                 </div>
                 <div class="field">
@@ -975,7 +993,25 @@
                         <select id="long-model">
                             <option value="veo3.1">Veo 3.1</option>
                             <option value="veo3.1-fast">Veo 3.1 Fast</option>
+                            <option value="veo3.1-lite">Veo 3.1 Lite</option>
                         </select>
+                    </div>
+                </div>
+                <div class="row2">
+                    <div class="field">
+                        <label data-i18n="resolution">Resolution</label>
+                        <select id="long-resolution">
+                            <option value="720p">720p</option>
+                            <option value="1080p" selected>1080p</option>
+                            <option value="4K">4K (Veo 3.1)</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label data-i18n="audio">Native Audio</label>
+                        <div class="check-line" style="margin:0">
+                            <input type="checkbox" id="long-audio" checked>
+                            <label for="long-audio" data-i18n="generateAudio">Generate audio</label>
+                        </div>
                     </div>
                 </div>
                 <div class="field">
@@ -1019,6 +1055,7 @@
                         <select id="extend-model">
                             <option value="veo3.1">Veo 3.1</option>
                             <option value="veo3.1-fast">Veo 3.1 Fast</option>
+                            <option value="veo3.1-lite">Veo 3.1 Lite</option>
                         </select>
                     </div>
                     <div class="field">
@@ -1027,6 +1064,23 @@
                             <option value="16:9">16:9</option>
                             <option value="9:16">9:16</option>
                         </select>
+                    </div>
+                </div>
+                <div class="row2">
+                    <div class="field">
+                        <label data-i18n="resolution">Resolution</label>
+                        <select id="extend-resolution">
+                            <option value="720p">720p</option>
+                            <option value="1080p" selected>1080p</option>
+                            <option value="4K">4K (Veo 3.1)</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label data-i18n="audio">Native Audio</label>
+                        <div class="check-line" style="margin:0">
+                            <input type="checkbox" id="extend-audio" checked>
+                            <label for="extend-audio" data-i18n="generateAudio">Generate audio</label>
+                        </div>
                     </div>
                 </div>
                 <div class="field">
@@ -1056,8 +1110,11 @@
                     <div class="field">
                         <label data-i18n="model">Model</label>
                         <select id="image-model">
-                            <option value="imagen-3.0-generate-002">Imagen 3.0</option>
-                            <option value="imagen-3.0-fast-generate-001">Imagen 3.0 Fast</option>
+                            <option value="imagen4-ultra">Imagen 4 Ultra (2K)</option>
+                            <option value="imagen4">Imagen 4 Standard</option>
+                            <option value="imagen4-fast" selected>Imagen 4 Fast</option>
+                            <option value="imagen3">Imagen 3</option>
+                            <option value="imagen3-fast">Imagen 3 Fast</option>
                         </select>
                     </div>
                     <div class="field">
@@ -1111,19 +1168,40 @@
                         <div class="field">
                             <label data-i18n="ttsEngine">TTS Engine</label>
                             <select id="narr-engine" onchange="onNarrEngineChange()">
-                                <option value="mimo">MiMo / gTTS (Free)</option>
-                                <option value="openai">OpenAI / XiaomiMimo (SK-Key)</option>
-                                <option value="gemini">Google Cloud TTS</option>
+                                <option value="gemini" selected>Gemini TTS (30 voices, 70+ langs)</option>
+                                <option value="openai">MiMo TTS (Chinese optimized)</option>
+                                <option value="gtts">gTTS (Free fallback)</option>
                             </select>
                         </div>
                         <div class="field">
                             <label data-i18n="voice">Voice</label>
                             <select id="narr-voice">
-                                <option value="mimo_default">MiMo Default</option>
-                                <option value="default_zh">Chinese Female</option>
-                                <option value="default_en">English Female</option>
+                                <option value="Kore">Kore (Neutral)</option>
+                                <option value="Puck">Puck (Upbeat)</option>
+                                <option value="Charon">Charon (Deep)</option>
+                                <option value="Fenrir">Fenrir (Raspy)</option>
+                                <option value="Leda">Leda (Youthful)</option>
+                                <option value="Orus">Orus (Firm)</option>
+                                <option value="Aoede">Aoede (Breezy)</option>
+                                <option value="Zephyr">Zephyr (Bright)</option>
+                                <option value="Autonoe">Autonoe</option>
+                                <option value="Callirrhoe">Callirrhoe</option>
+                                <option value="Enceladus">Enceladus</option>
+                                <option value="Iapetus">Iapetus</option>
+                                <option value="Umbriel">Umbriel</option>
+                                <option value="Algieba">Algieba</option>
+                                <option value="Despina">Despina</option>
+                                <option value="Erinome">Erinome</option>
+                                <option value="Sulafat">Sulafat</option>
+                                <option value="Achernar">Achernar</option>
+                                <option value="Schedar">Schedar</option>
+                                <option value="Nashira">Nashira</option>
                             </select>
                         </div>
+                    </div>
+                    <div class="field" id="narr-style-field">
+                        <label data-i18n="voiceStyle">Voice Style (optional)</label>
+                        <input type="text" id="narr-style" placeholder="e.g. warm and calm, or [whispers] [laughs] [excitedly]">
                     </div>
                     <button class="gen-btn" onclick="autoNarrate()" data-i18n="oneClickGenerate">🚀 One-Click Generate</button>
                 </div>
@@ -1726,8 +1804,10 @@ function useChatFull(t) {
 // Cost estimate & confirm
 // ─────────────────────────────────────────────────────────────────────────────
 const PRICES = {
-    'veo3.1': 0.40, 'veo3.1-fast': 0.20, 'veo3': 0.40, 'veo3-fast': 0.20, 'veo2': 0.50,
-    'imagen-3.0-generate-002': 0.04, 'imagen-3.0-fast-generate-001': 0.02
+    'veo3.1': 0.40, 'veo3.1-fast': 0.15, 'veo3.1-lite': 0.05,
+    'veo3': 0.40, 'veo3-fast': 0.20, 'veo2': 0.50,
+    'imagen4-ultra': 0.06, 'imagen4': 0.04, 'imagen4-fast': 0.02,
+    'imagen3': 0.04, 'imagen3-fast': 0.02,
 };
 
 function estimateCost() {
@@ -1822,6 +1902,8 @@ async function generate() {
             fd.append('prompt', prompt); fd.append('negative_prompt', neg);
             fd.append('enhance_prompt', enhance); fd.append('model', model);
             fd.append('ratio', ratio); fd.append('duration', extendDur);
+            fd.append('generate_audio', document.getElementById('extend-audio').checked);
+            fd.append('resolution', document.getElementById('extend-resolution').value);
             if (extendFileType === 'video') fd.append('video', extendFile);
             else fd.append('last_frame', extendFile);
             r = await fetch(`${API}/api/extend`, { method: 'POST', body: fd });
@@ -1831,8 +1913,15 @@ async function generate() {
             fd.append('mode', mode); fd.append('prompt', prompt);
             fd.append('negative_prompt', neg); fd.append('enhance_prompt', enhance);
             fd.append('model', model); fd.append('ratio', ratio);
-            if (mode === 'long') fd.append('total_seconds', document.getElementById('long-time').value);
-            else if (mode === 'short') fd.append('duration', dur);
+            if (mode === 'long') {
+                fd.append('total_seconds', document.getElementById('long-time').value);
+                fd.append('generate_audio', document.getElementById('long-audio').checked);
+                fd.append('resolution', document.getElementById('long-resolution').value);
+            } else if (mode === 'short') {
+                fd.append('duration', dur);
+                fd.append('generate_audio', document.getElementById('short-audio').checked);
+                fd.append('resolution', document.getElementById('short-resolution').value);
+            }
             const img = document.getElementById('ref-input');
             if (img.files.length) fd.append('image', img.files[0]);
             r = await fetch(`${API}/api/generate`, { method: 'POST', body: fd });
@@ -1977,7 +2066,10 @@ async function autoNarrate() {
 
         const narRes = await fetch(`${API}/api/narration`, {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text: textData.text, images: generatedImages, voice, engine })
+            body: JSON.stringify({
+                text: textData.text, images: generatedImages, voice, engine,
+                style: document.getElementById('narr-style')?.value || null,
+            })
         });
         const narData = await narRes.json();
         if (narData.error) throw new Error(narData.error);
@@ -2046,7 +2138,12 @@ async function manualNarrate() {
 
         const narRes = await fetch(`${API}/api/narration`, {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text, images: uploaded, voice: 'mimo_default', engine: 'mimo' })
+            body: JSON.stringify({
+                text, images: uploaded,
+                voice: document.getElementById('narr-voice').value,
+                engine: document.getElementById('narr-engine').value,
+                style: document.getElementById('narr-style')?.value || null,
+            })
         });
         const narData = await narRes.json();
         if (narData.error) throw new Error(narData.error);

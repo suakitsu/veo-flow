@@ -34,6 +34,10 @@ app.register_blueprint(proxy.bp)
 app.register_blueprint(narration.bp)
 app.register_blueprint(nano_banana.bp)
 
+# 启动文件清理后台服务
+from services.cleanup import start_cleanup_service
+start_cleanup_service()
+
 
 # ------------------------------------------------------------------
 # Templates API

@@ -7,6 +7,7 @@ import time
 from google.genai import types
 from generators.client import get_client
 from config import IMAGEN_MODELS, IMAGEN_PRICING, DEFAULT_IMAGEN_MODEL
+from services.retry import call_with_retry
 
 
 class ImagenGenerator:
@@ -51,7 +52,8 @@ class ImagenGenerator:
         task['message'] = 'Generating image...'
         task['progress'] = 40
 
-        response = client.models.generate_images(
+        response = call_with_retry(
+            client.models.generate_images,
             model=model_id, prompt=prompt, config=config,
         )
 

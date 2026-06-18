@@ -17,6 +17,7 @@ from config import (
     POLL_MAX_WAIT, POLL_INTERVALS, SEGMENT_DURATION,
 )
 from services.logger import get_logger
+from services.retry import call_with_retry
 
 log = get_logger(__name__)
 
@@ -175,7 +176,8 @@ class VeoGenerator:
         task['message'] = 'Generating video...'
         task['progress'] = 20
 
-        operation = client.models.generate_videos(
+        operation = call_with_retry(
+            client.models.generate_videos,
             model=model_id, source=source, config=config,
         )
         task['message'] = f'Operation created: {operation.name}'
@@ -272,7 +274,8 @@ class VeoGenerator:
         task['message'] = 'Generating interpolation video...'
         task['progress'] = 20
 
-        operation = client.models.generate_videos(
+        operation = call_with_retry(
+            client.models.generate_videos,
             model=model_id, source=source, config=config,
         )
         task['message'] = f'Operation created: {operation.name}'
@@ -329,7 +332,8 @@ class VeoGenerator:
         task['message'] = 'Generating video extension...'
         task['progress'] = 20
 
-        operation = client.models.generate_videos(
+        operation = call_with_retry(
+            client.models.generate_videos,
             model=model_id, source=source, config=config,
         )
         task['message'] = f'Operation created: {operation.name}'
@@ -406,7 +410,8 @@ class VeoGenerator:
             except Exception as e:
                 task['message'] = f'Segment {i+1}/{num_segments} (no image: {e})...'
 
-            operation = client.models.generate_videos(
+            operation = call_with_retry(
+                client.models.generate_videos,
                 model=model_id, source=source, config=config,
             )
 

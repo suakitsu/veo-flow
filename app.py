@@ -39,6 +39,10 @@ app.register_blueprint(docs.bp)
 from services.cleanup import start_cleanup_service
 start_cleanup_service()
 
+# 注册 API 鉴权中间件（通过 API_KEY 环境变量启用）
+from services.auth import auth_middleware
+app.before_request(auth_middleware)
+
 
 # ------------------------------------------------------------------
 # Templates API

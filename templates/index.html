@@ -1537,6 +1537,11 @@ if (savedTheme) document.body.dataset.theme = savedTheme;
 // State
 // ─────────────────────────────────────────────────────────────────────────────
 const API = 'http://127.0.0.1:5000';
+// API Key 鉴权（从 localStorage 读取，用户可在设置中配置）
+const API_KEY = localStorage.getItem('veo_api_key') || '';
+function authHeaders() {
+    return API_KEY ? { 'X-API-Key': API_KEY } : {};
+}
 let dur = 8, extendDur = 8, mode = 'short', taskId = null, pollTimer = null, aiStyle = 'cinematic';
 let extendFile = null, extendFileType = null;
 
@@ -1929,7 +1934,7 @@ async function generate() {
             fd.append('resolution', document.getElementById('extend-resolution').value);
             if (extendFileType === 'video') fd.append('video', extendFile);
             else fd.append('last_frame', extendFile);
-            r = await fetch(`${API}/api/extend`, { method: 'POST', body: fd });
+            r = await fetch(`${API}/api/extend`, { method: 'POST', body: fd, headers: authHeaders() });
             d = await r.json();
         } else {
             const fd = new FormData();
@@ -1951,7 +1956,7 @@ async function generate() {
             } else if (img.files.length) {
                 fd.append('image', img.files[0]);
             }
-            r = await fetch(`${API}/api/generate`, { method: 'POST', body: fd });
+            r = await fetch(`${API}/api/generate`, { method: 'POST', body: fd, headers: authHeaders() });
             d = await r.json();
         }
         if (d.error) throw new Error(d.error);
@@ -2092,7 +2097,7 @@ async function autoNarrate() {
         progBar.style.width = '70%';
 
         const narRes = await fetch(`${API}/api/narration`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders() },
             body: JSON.stringify({
                 text: textData.text, images: generatedImages, voice, engine,
                 style: document.getElementById('narr-style')?.value || null,
@@ -2164,7 +2169,7 @@ async function manualNarrate() {
         progBar.style.width = '65%';
 
         const narRes = await fetch(`${API}/api/narration`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders() },
             body: JSON.stringify({
                 text, images: uploaded,
                 voice: document.getElementById('narr-voice').value,

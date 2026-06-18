@@ -11,6 +11,9 @@ from datetime import datetime
 from pathlib import Path
 
 from config import BASE_DIR
+from services.logger import get_logger
+
+log = get_logger(__name__)
 
 TASKS_FILE = BASE_DIR / 'tasks.json'
 _lock = threading.Lock()
@@ -37,7 +40,7 @@ def _save_tasks():
         with open(TASKS_FILE, 'w', encoding='utf-8') as f:
             json.dump(serializable, f, ensure_ascii=False, indent=2)
     except Exception as e:
-        print(f"[TaskManager] Failed to save tasks: {e}")
+        log.error("Failed to save tasks: %s", e)
 
 
 def _load_tasks():
@@ -55,9 +58,9 @@ def _load_tasks():
                         task['message'] = 'Server restarted while task was running'
                         task['progress'] = task.get('progress', 0)
                 _tasks.update(data)
-                print(f"[TaskManager] Loaded {len(data)} tasks from disk")
+                log.info("Loaded %d tasks from disk", len(data))
         except Exception as e:
-            print(f"[TaskManager] Failed to load tasks: {e}")
+            log.error("Failed to load tasks: %s", e)
 
 
 # 启动时加载
@@ -154,7 +157,7 @@ def unlock_user(user_ip: str, task_id: str):
     """解锁用户"""
     if _user_locks.get(user_ip) == task_id:
         _user_locks.pop(user_ip, None)
-        print(f"[TaskManager] Unlocked user {user_ip} after task {task_id}")
+        log.info("Unlocked user %s after task %s", user_ip, task_id)
 
 
 # 后台线程调度
@@ -168,7 +171,7 @@ def run_in_background(target, args: tuple, user_ip: str, task_id: str):
         except Exception as e:
             if task:
                 mark_error(task, str(e))
-            print(f"[TaskManager] Task {task_id} error: {e}")
+            log.error("Task %s error: %s", task_id, e)
         finally:
             # 确保最终状态持久化
             with _lock:

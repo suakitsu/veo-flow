@@ -112,17 +112,17 @@ def index():
 # ------------------------------------------------------------------
 
 if __name__ == '__main__':
-    print("=" * 50)
-    print("  Veo Flow - AI Video & Image Generation")
-    print("=" * 50)
-    print(f"  Upload folder : {UPLOAD_FOLDER}")
-    print(f"  Output folder : {OUTPUT_FOLDER}")
-    print(f"  Open          : http://localhost:5000")
-    print()
+    import logging
+    startup_log = logging.getLogger(__name__)
+    startup_log.info("=" * 50)
+    startup_log.info("  Veo Flow - AI Video & Image Generation")
+    startup_log.info("=" * 50)
+    startup_log.info("  Upload folder : %s", UPLOAD_FOLDER)
+    startup_log.info("  Output folder : %s", OUTPUT_FOLDER)
+    startup_log.info("  Open          : http://localhost:5000")
 
     if not os.getenv('GCP_PROJECT_ID'):
-        print("  ⚠️  Warning: GCP_PROJECT_ID not set")
-        print()
+        startup_log.warning("  GCP_PROJECT_ID not set")
 
     # debug 模式由环境变量控制（生产环境必须为 false）
     debug_mode = os.getenv('FLASK_DEBUG', 'false').lower() in ('1', 'true', 'yes')

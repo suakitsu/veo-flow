@@ -18,6 +18,9 @@ from config import (
     UPLOAD_FOLDER, OUTPUT_FOLDER,
     GEMINI_TTS_MODELS, DEFAULT_TTS_MODEL, GEMINI_TTS_VOICES,
 )
+from services.logger import get_logger
+
+log = get_logger(__name__)
 
 bp = Blueprint('narration', __name__)
 
@@ -31,7 +34,7 @@ def _tts_gtts(text: str, output_path: str, lang: str = 'zh') -> bool:
         tts.save(output_path)
         return True
     except Exception as e:
-        print(f"[Narration] gTTS error: {e}")
+        log.error("gTTS error: %s", e)
         return False
 
 
@@ -55,7 +58,7 @@ def _tts_gemini(text: str, output_path: str, voice: str = 'Kore',
         if voice not in GEMINI_TTS_VOICES:
             voice = 'Kore'
 
-        print(f"[Gemini TTS] model={tts_model_id}, voice={voice}, text={text[:30]}...")
+        log.info("Gemini TTS model=%s voice=%s text=%s...", tts_model_id, voice, text[:30])
 
         client = get_client()
 
@@ -91,20 +94,17 @@ def _tts_gemini(text: str, output_path: str, voice: str = 'Kore',
                     break
 
         if not audio_data:
-            print("[Gemini TTS] No audio data in response, falling back to gTTS")
+            log.warning("Gemini TTS: no audio data in response, falling back to gTTS")
             lang = 'zh' if any(ord(c) > 127 for c in text) else 'en'
             return _tts_gtts(text, output_path, lang)
 
         with open(output_path, 'wb') as f:
             f.write(audio_data)
-        print(f"[Gemini TTS] Audio saved to {output_path} ({len(audio_data)} bytes)")
+        log.info("Gemini TTS audio saved to %s (%d bytes)", output_path, len(audio_data))
         return True
 
     except Exception as e:
-        print(f"[Gemini TTS] Error: {e}")
-        import traceback
-        traceback.print_exc()
-        print(f"[Narration] Gemini TTS error: {e}, falling back to gTTS")
+        log.error("Gemini TTS error: %s, falling back to gTTS", e)
         lang = 'zh' if any(ord(c) > 127 for c in text) else 'en'
         return _tts_gtts(text, output_path, lang)
 
@@ -173,7 +173,7 @@ def _tts_gemini_multi(speakers_text: str, output_path: str,
         return True
 
     except Exception as e:
-        print(f"[Gemini TTS Multi] Error: {e}")
+        log.error("Gemini TTS Multi error: %s", e)
         return False
 
 
@@ -189,7 +189,7 @@ def _tts_openai(text: str, output_path: str, voice: str = 'alloy') -> bool:
             log.write(f"Received text: {text!r}\n")
             log.write(f"Text length: {len(text)}\n")
 
-        print(f"[_tts_openai] Received text: {text!r}")
+        log.debug("MiMo TTS received text: %r", text)
 
         with open('config.json', 'r') as f:
             cfg = json.load(f)
@@ -197,7 +197,7 @@ def _tts_openai(text: str, output_path: str, voice: str = 'alloy') -> bool:
             base = cfg.get('api_base_url', 'https://api.xiaomimimo.com/v1')
 
         if not key:
-            print("[TTS Debug] No API key!")
+            log.warning("MiMo TTS: no API key configured")
             return False
 
         url = f"{base.rstrip('/')}/chat/completions"
@@ -238,12 +238,12 @@ def _tts_openai(text: str, output_path: str, voice: str = 'alloy') -> bool:
                     f.write(audio_data)
                 return True
 
-        print(f"[Narration] MiMo TTS: no audio data in response")
+        log.warning("MiMo TTS: no audio data in response")
         return False
     except Exception as e:
-        print(f"[Narration] MiMo TTS error: {e}")
+        log.error("MiMo TTS error: %s", e)
         import traceback
-        traceback.print_exc()
+        log.debug("Traceback: %s", traceback.format_exc())
         return False
 
 
@@ -318,7 +318,7 @@ def _create_slideshow(image_paths: list, audio_path: str, output_path: str,
                     frames.append(frame)
         
         if not frames:
-            print("[Narration] No frames created")
+            log.error("Slideshow: no frames created")
             return False
         
         # 截断到音频时长
@@ -349,9 +349,9 @@ def _create_slideshow(image_paths: list, audio_path: str, output_path: str,
         
         return True
     except Exception as e:
-        print(f"[Narration] slideshow error: {e}")
+        log.error("Slideshow error: %s", e)
         import traceback
-        traceback.print_exc()
+        log.debug("Traceback: %s", traceback.format_exc())
         return False
 
 
@@ -413,7 +413,7 @@ def auto_narration():
 
     except Exception as e:
         # Fallback：返回占位数据
-        print(f"[Narration] Gemini text gen error: {e}")
+        log.error("Gemini text gen error: %s", e)
         return jsonify({
             'text': f'A beautiful story about {topic}. ' * max(1, duration // 10),
             'image_prompts': [f'{topic} scene {i+1}' for i in range(image_count)],
@@ -453,7 +453,7 @@ def ai_image():
             'url': f'/api/uploads/{filename}',
         })
     except Exception as e:
-        print(f"[Narration] ai-image error: {e}")
+        log.error("ai-image error: %s", e)
         return jsonify({'error': str(e)}), 500
 
 

@@ -16,6 +16,9 @@ from config import (
     VEO_MODELS, VEO_PRICING, OUTPUT_FOLDER,
     POLL_MAX_WAIT, POLL_INTERVALS, SEGMENT_DURATION,
 )
+from services.logger import get_logger
+
+log = get_logger(__name__)
 
 # 检查 OpenCV
 try:
@@ -142,7 +145,7 @@ class VeoGenerator:
             try:
                 source.image = types.Image.from_file(location=reference_image)
             except Exception as e:
-                print(f"Failed to load reference image: {e}")
+                log.warning("Failed to load reference image: %s", e)
 
         task['message'] = 'Generating video...'
         task['progress'] = 20

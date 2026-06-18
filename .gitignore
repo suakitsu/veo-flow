@@ -17,3 +17,5 @@ config.json
 uploads/
 outputs/
 *.operation.json
+tasks.json
+tts_debug.log

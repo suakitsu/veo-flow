@@ -1,9 +1,12 @@
 """
 任务状态 & 文件下载路由
+支持 SSE 实时进度推送
 """
 
 import os
-from flask import Blueprint, jsonify, send_file
+import json
+import time
+from flask import Blueprint, jsonify, send_file, Response, stream_with_context
 
 from services import task_manager as tm
 
@@ -28,6 +31,76 @@ def get_task_status(task_id):
             else None
         ),
     })
+
+
+@bp.route('/api/task/<task_id>/stream')
+def stream_task_status(task_id):
+    """SSE 端点：实时推送任务进度，任务完成后自动关闭流
+
+    前端用法：
+      const es = new EventSource('/api/task/<id>/stream');
+      es.onmessage = (e) => {
+          const data = JSON.parse(e.data);
+          updateProgress(data.progress, data.message);
+          if (data.status === 'completed' || data.status === 'error') es.close();
+      };
+    """
+    def generate():
+        last_progress = -1
+        last_message = ''
+        idle_count = 0
+
+        while True:
+            task = tm.get_task(task_id)
+            if not task:
+                yield f"data: {json.dumps({'error': 'Task not found'})}\n\n"
+                break
+
+            # 只在状态变化时推送
+            current_progress = task.get('progress', 0)
+            current_message = task.get('message', '')
+            current_status = task.get('status', 'pending')
+
+            if current_progress != last_progress or current_message != last_message:
+                payload = {
+                    'id': task_id,
+                    'status': current_status,
+                    'progress': current_progress,
+                    'message': current_message,
+                    'output_url': (
+                        f'/api/download/{task_id}'
+                        if current_status == 'completed'
+                        and os.path.exists(task.get('output_path', ''))
+                        else None
+                    ),
+                }
+                yield f"data: {json.dumps(payload)}\n\n"
+                last_progress = current_progress
+                last_message = current_message
+                idle_count = 0
+            else:
+                idle_count += 1
+
+            # 终止条件
+            if current_status in ('completed', 'error', 'interrupted'):
+                break
+
+            # 超时保护（30 分钟无变化则断开）
+            if idle_count > 1800:
+                yield f"data: {json.dumps({'error': 'Timeout'})}\n\n"
+                break
+
+            time.sleep(1)
+
+    return Response(
+        stream_with_context(generate()),
+        mimetype='text/event-stream',
+        headers={
+            'Cache-Control': 'no-cache',
+            'X-Accel-Buffering': 'no',
+            'Connection': 'keep-alive',
+        },
+    )
 
 
 @bp.route('/api/download/<task_id>')

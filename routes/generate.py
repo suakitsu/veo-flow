@@ -140,7 +140,8 @@ def generate_video():
                 (task, prompt, model, duration, ratio, str(output_path),
                  str(image_path) if image_path else None,
                  negative_prompt or None, enhance_prompt,
-                 generate_audio, resolution),
+                 generate_audio, resolution,
+                 image_paths if len(image_paths) > 1 else None),
                 user_ip, task['id'],
             )
 

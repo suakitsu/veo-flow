@@ -9,6 +9,7 @@ from flask import Blueprint, request, jsonify
 from config import UPLOAD_FOLDER, OUTPUT_FOLDER, GEMINI_IMAGE_MODELS
 from generators.nano_banana import NanoBananaGenerator
 from services import task_manager as tm
+from services.request_utils import get_client_ip
 
 bp = Blueprint('nano_banana', __name__)
 
@@ -67,7 +68,7 @@ def generate_image():
             pass
 
     # 创建任务
-    user_ip = request.remote_addr or 'unknown'
+    user_ip = get_client_ip()
     if tm.is_locked(user_ip):
         return jsonify({'error': 'Another task is running. Please wait.'}), 429
 

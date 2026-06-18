@@ -13,6 +13,7 @@ from config import UPLOAD_FOLDER, OUTPUT_FOLDER, IMAGEN_PRICING
 from generators.veo import VeoGenerator
 from generators.imagen import ImagenGenerator
 from services import task_manager as tm
+from services.request_utils import get_client_ip
 
 bp = Blueprint('generate', __name__)
 
@@ -52,7 +53,7 @@ def get_models():
 def generate_video():
     """生成视频/图像任务"""
     try:
-        user_ip = request.remote_addr
+        user_ip = get_client_ip()
         locked, locked_id = tm.check_user_lock(user_ip)
         if locked:
             task = tm.get_task(locked_id)
@@ -157,7 +158,7 @@ def generate_video():
 def extend_video():
     """延长视频任务"""
     try:
-        user_ip = request.remote_addr
+        user_ip = get_client_ip()
         locked, locked_id = tm.check_user_lock(user_ip)
         if locked:
             return jsonify({
@@ -263,7 +264,7 @@ def interpolate_frames():
     generate_audio = data.get('generate_audio', 'true') == 'true'
     resolution = data.get('resolution', '1080p')
 
-    user_ip = request.remote_addr or 'unknown'
+    user_ip = get_client_ip()
     locked, _ = tm.check_user_lock(user_ip)
     if locked:
         return jsonify({'error': 'Another task is running. Please wait.'}), 429

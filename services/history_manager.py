@@ -14,13 +14,28 @@ _lock = threading.Lock()
 
 # 模型单价（美元/秒或美元/张）
 MODEL_COST = {
+    # Veo 系列（美元/秒）
     'veo-2.0-generate-001': 0.50,
     'veo-3.0-generate-001': 0.40,
     'veo-3.0-fast-generate-001': 0.20,
     'veo-3.1-generate-001': 0.40,
-    'veo-3.1-fast-generate-001': 0.20,
+    'veo-3.1-fast-generate-001': 0.15,
+    'veo-3.1-lite-generate-preview': 0.05,
+    # Imagen 3 系列（美元/张）
     'imagen-3.0-generate-002': 0.04,
     'imagen-3.0-fast-generate-001': 0.02,
+    # Imagen 4 系列（美元/张）
+    'imagen-4.0-generate-001': 0.04,
+    'imagen-4.0-fast-generate-001': 0.02,
+    'imagen-4.0-ultra-generate-001': 0.06,
+    # Gemini 原生图像（Nano Banana，按张计）
+    'gemini-3.1-flash-image': 0.039,
+    'gemini-3-pro-image': 0.039,
+    'gemini-2.5-flash-image': 0.039,
+    # Gemini TTS（按字符计，此处为每千字符美元）
+    'gemini-3.1-flash-tts-preview': 0.005,
+    'gemini-2.5-flash-preview-tts': 0.005,
+    'gemini-2.5-pro-preview-tts': 0.025,
 }
 
 

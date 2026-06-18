@@ -1,6 +1,6 @@
 """
 任务状态 & 文件下载路由
-支持 SSE 实时进度推送
+支持 SSE 实时进度推送（多进程兼容，从 tasks.json 读取状态）
 """
 
 import os
@@ -9,14 +9,42 @@ import time
 from flask import Blueprint, jsonify, send_file, Response, stream_with_context
 
 from services import task_manager as tm
+from services.logger import get_logger
+from config import BASE_DIR
+
+log = get_logger(__name__)
 
 bp = Blueprint('tasks', __name__)
+
+TASKS_FILE = BASE_DIR / 'tasks.json'
+
+
+def _load_task_from_disk(task_id: str) -> dict | None:
+    """从 tasks.json 文件读取任务状态（多 worker 兼容）
+
+    当使用 gunicorn 多 worker 部署时，SSE 请求可能落到不同 worker，
+    该 worker 内存中没有任务数据，需要从磁盘读取。
+    """
+    # 先尝试内存（同 worker 时快路径）
+    task = tm.get_task(task_id)
+    if task:
+        return task
+
+    # 内存中没有，从磁盘读取（跨 worker 场景）
+    try:
+        if TASKS_FILE.exists():
+            with open(TASKS_FILE, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            return data.get(task_id)
+    except Exception as e:
+        log.warning("Failed to read task %s from disk: %s", task_id, e)
+    return None
 
 
 @bp.route('/api/task/<task_id>')
 def get_task_status(task_id):
-    """获取任务状态"""
-    task = tm.get_task(task_id)
+    """获取任务状态（多 worker 兼容，自动从磁盘回读）"""
+    task = _load_task_from_disk(task_id)
     if not task:
         return jsonify({'error': 'Task not found'}), 404
 
@@ -51,7 +79,7 @@ def stream_task_status(task_id):
         idle_count = 0
 
         while True:
-            task = tm.get_task(task_id)
+            task = _load_task_from_disk(task_id)
             if not task:
                 yield f"data: {json.dumps({'error': 'Task not found'})}\n\n"
                 break

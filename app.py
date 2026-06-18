@@ -102,6 +102,54 @@ def clear_history():
     return jsonify({'success': True})
 
 
+@app.route('/api/history/thumbnail/<task_id>')
+def get_thumbnail(task_id):
+    """生成历史记录的缩略图
+
+    - 图片：直接返回缩略图
+    - 视频：用 ffmpeg 抽取第 1 秒作为缩略图
+    """
+    import os
+    import subprocess
+    import tempfile
+    from flask import send_file, abort
+    from imageio_ffmpeg import get_ffmpeg_exe
+
+    # 从 history 中查找记录
+    history = hm._load()
+    entry = next((h for h in history if h['id'] == task_id), None)
+    if not entry or not entry.get('output_path'):
+        abort(404)
+
+    output_path = entry['output_path']
+    if not os.path.exists(output_path):
+        abort(404)
+
+    # 图片直接返回
+    if output_path.endswith(('.png', '.jpg', '.jpeg', '.webp')):
+        return send_file(output_path, mimetype='image/png')
+
+    # 视频抽取缩略图
+    thumb_dir = os.path.join(tempfile.gettempdir(), 'veo_thumbs')
+    os.makedirs(thumb_dir, exist_ok=True)
+    thumb_path = os.path.join(thumb_dir, f'{task_id}_thumb.jpg')
+
+    if not os.path.exists(thumb_path):
+        try:
+            subprocess.run([
+                get_ffmpeg_exe(), '-y', '-i', output_path,
+                '-ss', '00:00:01', '-vframes', '1',
+                '-vf', 'scale=320:-1',
+                thumb_path,
+            ], capture_output=True, timeout=10)
+        except Exception:
+            abort(500)
+
+    if os.path.exists(thumb_path):
+        return send_file(thumb_path, mimetype='image/jpeg')
+    abort(404)
+
+
 # ------------------------------------------------------------------
 # Main page
 # ------------------------------------------------------------------

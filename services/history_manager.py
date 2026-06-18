@@ -68,7 +68,7 @@ def _save(records: list):
 
 def record(task_id: str, prompt: str, model: str, model_id: str,
            duration: int, mode: str, ratio: str, status: str,
-           elapsed: float = 0.0) -> dict:
+           elapsed: float = 0.0, output_path: str = None) -> dict:
     """记录一次生成，保存到 history.json，返回记录 dict"""
     cost = MODEL_COST.get(model_id, 0.015) * max(duration, 1)
     entry = {
@@ -84,6 +84,13 @@ def record(task_id: str, prompt: str, model: str, model_id: str,
         'elapsed': round(elapsed, 1),
         'created_at': datetime.now().isoformat(),
     }
+    # 保存输出文件路径（用于缩略图预览）
+    if output_path:
+        entry['output_path'] = output_path
+        # 生成缩略图 URL（仅当文件存在时）
+        import os
+        if os.path.exists(output_path):
+            entry['thumbnail_url'] = f'/api/history/thumbnail/{task_id}'
     with _lock:
         history = _load()
         history.append(entry)

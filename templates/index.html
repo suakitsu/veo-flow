@@ -1298,6 +1298,7 @@
                     <table class="hist-table">
                         <thead>
                             <tr>
+                                <th>Preview</th>
                                 <th data-i18n="time">Time</th>
                                 <th data-i18n="promptCol">Prompt</th>
                                 <th>Model</th>
@@ -2445,7 +2446,12 @@ async function loadDashboard() {
                 : h.status === 'error'
                 ? '<span class="badge badge-err">✗ Error</span>'
                 : '<span class="badge badge-pend">⏳</span>';
+            // 缩略图：如果有 thumbnail_url 则显示
+            const thumb = h.thumbnail_url
+                ? `<img src="${API}${h.thumbnail_url}" style="width:48px;height:32px;object-fit:cover;border-radius:4px;cursor:pointer" onclick="window.open('${API}${h.thumbnail_url}','_blank')" onerror="this.style.display='none'">`
+                : '<span style="color:var(--text3)">—</span>';
             return `<tr>
+                <td>${thumb}</td>
                 <td>${dt}</td>
                 <td>${prompt}${(h.prompt||'').length>36?'…':''}</td>
                 <td>${h.model || '-'}</td>
@@ -2453,7 +2459,7 @@ async function loadDashboard() {
                 <td>${badge}</td>
             </tr>`;
         }).join('');
-        document.getElementById('history-body').innerHTML = rows || '<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:16px">No history yet</td></tr>';
+        document.getElementById('history-body').innerHTML = rows || '<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:16px">No history yet</td></tr>';
     } catch (e) { console.error(e); }
 }
 

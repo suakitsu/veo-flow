@@ -2,8 +2,10 @@
 任务管理器
 集中管理任务状态、用户锁、后台线程调度
 支持任务状态持久化到 JSON 文件，重启后恢复
+支持可配置的并发限制（每用户最大并行任务数）
 """
 
+import os
 import uuid
 import json
 import threading
@@ -16,12 +18,19 @@ from services.logger import get_logger
 log = get_logger(__name__)
 
 TASKS_FILE = BASE_DIR / 'tasks.json'
+
+# 并发限制配置（通过环境变量）
+# 每用户最大并行任务数（默认 1）
+MAX_TASKS_PER_USER = int(os.getenv('MAX_TASKS_PER_USER', '1'))
+# 全局最大并行任务数（默认 0 = 不限制）
+MAX_GLOBAL_TASKS = int(os.getenv('MAX_GLOBAL_TASKS', '0'))
+
 _lock = threading.Lock()
 
 # 任务状态存储
 _tasks: dict = {}
 
-# 用户任务锁：ip -> task_id
+# 用户任务锁：ip -> set of task_ids
 _user_locks: dict = {}
 
 
@@ -128,35 +137,78 @@ def mark_completed(task: dict):
         _save_tasks()
 
 
-# 用户锁（防止同一 IP 并发提交）
+# 用户锁（防止同一 IP 超过并发限制）
 
 def is_locked(user_ip: str) -> bool:
-    """检查用户是否被锁定"""
+    """检查用户是否已达并发上限"""
     locked, _ = check_user_lock(user_ip)
     return locked
 
 
 def check_user_lock(user_ip: str) -> tuple[bool, str | None]:
-    """检查用户是否有进行中的任务，返回 (is_locked, task_id)"""
-    if user_ip in _user_locks:
-        locked_id = _user_locks[user_ip]
-        locked_task = _tasks.get(locked_id)
-        if locked_task and locked_task['status'] in ('queued', 'running', 'pending'):
-            return True, locked_id
-        # 任务已结束，清理过期锁
-        _user_locks.pop(user_ip, None)
+    """检查用户是否可提交新任务，返回 (is_locked, oldest_task_id)
+
+    is_locked=True 表示已达并发上限，不能提交新任务
+    """
+    with _lock:
+        active_tasks = _get_active_tasks(user_ip)
+
+        # 检查每用户限制
+        if len(active_tasks) >= MAX_TASKS_PER_USER:
+            return True, active_tasks[0] if active_tasks else None
+
+        # 检查全局限制
+        if MAX_GLOBAL_TASKS > 0:
+            global_active = sum(
+                len(_get_active_tasks(ip)) for ip in _user_locks
+            )
+            if global_active >= MAX_GLOBAL_TASKS:
+                return True, None
+
     return False, None
 
 
+def _get_active_tasks(user_ip: str) -> list:
+    """获取用户活跃的任务 ID 列表（清理已完成的）"""
+    task_ids = _user_locks.get(user_ip, set())
+    if isinstance(task_ids, str):
+        # 向后兼容：旧版存储的是单个 task_id 字符串
+        task_ids = {task_ids}
+        _user_locks[user_ip] = task_ids
+
+    active = []
+    for tid in list(task_ids):
+        task = _tasks.get(tid)
+        if task and task['status'] in ('queued', 'running', 'pending'):
+            active.append(tid)
+        else:
+            # 清理已完成的任务
+            task_ids.discard(tid)
+    return active
+
+
 def lock_user(user_ip: str, task_id: str):
-    """锁定用户"""
-    _user_locks[user_ip] = task_id
+    """锁定用户（添加任务到活跃集合）"""
+    with _lock:
+        if user_ip not in _user_locks or isinstance(_user_locks[user_ip], str):
+            _user_locks[user_ip] = set()
+        _user_locks[user_ip].add(task_id)
 
 
 def unlock_user(user_ip: str, task_id: str):
-    """解锁用户"""
-    if _user_locks.get(user_ip) == task_id:
-        _user_locks.pop(user_ip, None)
+    """解锁用户（从活跃集合移除任务）"""
+    with _lock:
+        task_ids = _user_locks.get(user_ip)
+        if task_ids is None:
+            return
+        if isinstance(task_ids, str):
+            # 向后兼容
+            if task_ids == task_id:
+                _user_locks.pop(user_ip, None)
+            return
+        task_ids.discard(task_id)
+        if not task_ids:
+            _user_locks.pop(user_ip, None)
         log.info("Unlocked user %s after task %s", user_ip, task_id)
 
 

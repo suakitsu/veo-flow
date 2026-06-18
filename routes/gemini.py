@@ -13,6 +13,10 @@ from config import (
     UPLOAD_FOLDER, GEMINI_MODELS, DEFAULT_GEMINI_MODEL, STYLE_PROMPTS,
 )
 from generators.client import get_client
+from services.retry import call_with_retry
+from services.logger import get_logger
+
+log = get_logger(__name__)
 
 bp = Blueprint('gemini', __name__)
 
@@ -97,7 +101,8 @@ Your response must be a JSON object with these fields:
 
 Return ONLY the JSON, no markdown formatting."""
 
-            response = client.models.generate_content(
+            response = call_with_retry(
+                client.models.generate_content,
                 model=gemini_model,
                 contents=[image_data, base_prompt],
             )
@@ -141,7 +146,8 @@ If the user asks in Chinese, respond in Chinese but keep generated prompts in En
             contents.append(f"Current context: {context}")
         contents.append(message)
 
-        response = client.models.generate_content(
+        response = call_with_retry(
+            client.models.generate_content,
             model=gemini_model,
             contents=contents,
             config=types.GenerateContentConfig(
@@ -185,7 +191,8 @@ Your response must be a JSON object:
 
 Return ONLY the JSON, no markdown."""
 
-        response = client.models.generate_content(
+        response = call_with_retry(
+            client.models.generate_content,
             model=gemini_model,
             contents=[refine_instruction],
         )

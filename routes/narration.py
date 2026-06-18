@@ -19,6 +19,7 @@ from config import (
     GEMINI_TTS_MODELS, DEFAULT_TTS_MODEL, GEMINI_TTS_VOICES,
 )
 from services.logger import get_logger
+from services.retry import call_with_retry
 
 log = get_logger(__name__)
 
@@ -67,7 +68,8 @@ def _tts_gemini(text: str, output_path: str, voice: str = 'Kore',
         if style:
             contents = f"{style}\n{text}"
 
-        response = client.models.generate_content(
+        response = call_with_retry(
+            client.models.generate_content,
             model=tts_model_id,
             contents=contents,
             config=types.GenerateContentConfig(
@@ -142,7 +144,8 @@ def _tts_gemini_multi(speakers_text: str, output_path: str,
                 )
             )
 
-        response = client.models.generate_content(
+        response = call_with_retry(
+            client.models.generate_content,
             model=tts_model_id,
             contents=speakers_text,
             config=types.GenerateContentConfig(
@@ -382,7 +385,8 @@ def auto_narration():
   "image_prompts": ["prompt1", "prompt2", "prompt3"]
 }}"""
 
-        response = client.models.generate_content(
+        response = call_with_retry(
+            client.models.generate_content,
             model=DEFAULT_GEMINI_MODEL,
             contents=f"主题：{topic}",
             config={'system_instruction': system_prompt},

@@ -1963,7 +1963,12 @@ async function generate() {
         taskId = d.task_id;
         document.getElementById('prog-text').textContent = 'Task created...';
         document.getElementById('prog-bar').style.width = '10%';
-        pollTimer = setInterval(checkStatus, 2000);
+        // 优先使用 SSE 实时推送，不支持时回退到轮询
+        if (window.EventSource) {
+            startSSE(taskId);
+        } else {
+            pollTimer = setInterval(checkStatus, 2000);
+        }
     } catch (e) {
         alert('Error: ' + e.message);
         isSubmitting = false;
@@ -1971,6 +1976,65 @@ async function generate() {
         btn.textContent = lang === 'zh' ? '生成' : 'Generate';
         prog.classList.remove('show');
     }
+}
+
+// SSE 实时进度推送（比轮询更高效，服务端有变化才推送）
+let eventSource = null;
+function startSSE(id) {
+    if (eventSource) eventSource.close();
+    const url = `${API}/api/task/${id}/stream${API_KEY ? '?api_key=' + encodeURIComponent(API_KEY) : ''}`;
+    eventSource = new EventSource(url);
+    eventSource.onmessage = (e) => {
+        try {
+            const d = JSON.parse(e.data);
+            if (d.error) {
+                eventSource.close(); eventSource = null;
+                isSubmitting = false;
+                const btn = document.getElementById('gen-btn'); btn.disabled = false;
+                btn.textContent = lang === 'zh' ? '生成' : 'Generate';
+                document.getElementById('progress').classList.remove('show');
+                alert('Failed: ' + d.error);
+                return;
+            }
+            document.getElementById('prog-text').textContent = d.message || '';
+            document.getElementById('prog-bar').style.width = (d.progress || 0) + '%';
+            if (d.status === 'completed') {
+                eventSource.close(); eventSource = null;
+                isSubmitting = false;
+                const btn = document.getElementById('gen-btn'); btn.disabled = false;
+                btn.textContent = lang === 'zh' ? '生成' : 'Generate';
+                document.getElementById('progress').classList.remove('show');
+                document.getElementById('result').classList.add('show');
+                const vid = document.getElementById('result-video');
+                const img = document.getElementById('result-image');
+                const dl = document.getElementById('dl-btn');
+                if (mode === 'image') {
+                    vid.style.display = 'none'; img.style.display = 'block';
+                    img.src = d.output_url; dl.href = d.output_url;
+                    dl.textContent = lang === 'zh' ? '下载图片' : 'Download Image';
+                } else {
+                    img.style.display = 'none'; vid.style.display = 'block';
+                    vid.src = d.output_url; dl.href = d.output_url;
+                    dl.textContent = lang === 'zh' ? '下载视频' : 'Download Video';
+                }
+            } else if (d.status === 'error' || d.status === 'interrupted') {
+                eventSource.close(); eventSource = null;
+                isSubmitting = false;
+                const btn = document.getElementById('gen-btn'); btn.disabled = false;
+                btn.textContent = lang === 'zh' ? '生成' : 'Generate';
+                document.getElementById('progress').classList.remove('show');
+                alert('Failed: ' + d.message);
+            }
+        } catch (err) { console.error('SSE parse error:', err); }
+    };
+    eventSource.onerror = () => {
+        // SSE 连接断开，回退到轮询
+        if (eventSource) { eventSource.close(); eventSource = null; }
+        if (taskId && isSubmitting) {
+            console.warn('SSE disconnected, falling back to polling');
+            pollTimer = setInterval(checkStatus, 2000);
+        }
+    };
 }
 
 async function checkStatus() {

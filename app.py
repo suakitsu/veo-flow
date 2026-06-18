@@ -15,7 +15,10 @@ from flask import Flask, render_template, request, jsonify
 from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app)
+
+# CORS 白名单（通过环境变量配置，逗号分隔；默认仅允许本地）
+_cors_origins = os.getenv('CORS_ORIGINS', 'http://localhost:5000,http://127.0.0.1:5000')
+CORS(app, origins=[o.strip() for o in _cors_origins.split(',') if o.strip()])
 
 # 注册路由蓝图
 from routes import generate, gemini, tasks, proxy, narration, nano_banana
@@ -112,4 +115,6 @@ if __name__ == '__main__':
         print("  ⚠️  Warning: GCP_PROJECT_ID not set")
         print()
 
-    app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=False)
+    # debug 模式由环境变量控制（生产环境必须为 false）
+    debug_mode = os.getenv('FLASK_DEBUG', 'false').lower() in ('1', 'true', 'yes')
+    app.run(host='0.0.0.0', port=5000, debug=debug_mode, use_reloader=False)

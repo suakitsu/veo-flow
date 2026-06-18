@@ -9,7 +9,7 @@ from pathlib import Path
 from datetime import datetime
 from flask import Blueprint, request, jsonify, send_file
 
-from config import UPLOAD_FOLDER, OUTPUT_FOLDER
+from config import UPLOAD_FOLDER, OUTPUT_FOLDER, IMAGEN_PRICING
 from generators.veo import VeoGenerator
 from generators.imagen import ImagenGenerator
 from services import task_manager as tm
@@ -19,15 +19,32 @@ bp = Blueprint('generate', __name__)
 
 @bp.route('/api/models')
 def get_models():
-    """获取可用 Veo 模型列表"""
+    """获取可用 Veo / Imagen 模型列表"""
     return jsonify({
-        'models': [
-            {'id': 'veo3.1', 'name': 'Veo 3.1', 'max_duration': 8, 'resolutions': ['720', '1080']},
-            {'id': 'veo3.1-fast', 'name': 'Veo 3.1 Fast', 'max_duration': 8, 'resolutions': ['720', '1080']},
-            {'id': 'veo3', 'name': 'Veo 3', 'max_duration': 8, 'resolutions': ['720', '1080']},
-            {'id': 'veo3-fast', 'name': 'Veo 3 Fast', 'max_duration': 8, 'resolutions': ['720', '1080']},
-            {'id': 'veo2', 'name': 'Veo 2', 'max_duration': 8, 'resolutions': ['720']},
-        ]
+        'veo_models': [
+            {'id': 'veo3.1', 'name': 'Veo 3.1', 'max_duration': 8,
+             'resolutions': ['720p', '1080p', '4K'], 'audio': True, 'price_per_sec': 0.40},
+            {'id': 'veo3.1-fast', 'name': 'Veo 3.1 Fast', 'max_duration': 8,
+             'resolutions': ['720p', '1080p'], 'audio': True, 'price_per_sec': 0.15},
+            {'id': 'veo3.1-lite', 'name': 'Veo 3.1 Lite', 'max_duration': 8,
+             'resolutions': ['720p', '1080p'], 'audio': True, 'price_per_sec': 0.05},
+            {'id': 'veo3', 'name': 'Veo 3', 'max_duration': 8,
+             'resolutions': ['720p', '1080p'], 'audio': True, 'price_per_sec': 0.40},
+            {'id': 'veo3-fast', 'name': 'Veo 3 Fast', 'max_duration': 8,
+             'resolutions': ['720p', '1080p'], 'audio': True, 'price_per_sec': 0.20},
+            {'id': 'veo2', 'name': 'Veo 2', 'max_duration': 8,
+             'resolutions': ['720p'], 'audio': False, 'price_per_sec': 0.50},
+        ],
+        'imagen_models': [
+            {'id': k, 'name': v, 'price_per_image': IMAGEN_PRICING.get(k, 0.04)}
+            for k, v in [
+                ('imagen4-ultra', 'Imagen 4 Ultra'),
+                ('imagen4', 'Imagen 4 Standard'),
+                ('imagen4-fast', 'Imagen 4 Fast'),
+                ('imagen3', 'Imagen 3'),
+                ('imagen3-fast', 'Imagen 3 Fast'),
+            ]
+        ],
     })
 
 
@@ -54,6 +71,9 @@ def generate_video():
         enhance_prompt = data.get('enhance_prompt') == 'true'
         model = data.get('model', 'veo3.1')
         ratio = data.get('ratio', '16:9')
+        # Veo 3.1+ 新增参数
+        generate_audio = data.get('generate_audio', 'true') == 'true'
+        resolution = data.get('resolution', '1080p')
 
         if not prompt:
             return jsonify({'error': 'Please enter a prompt'}), 400
@@ -68,7 +88,8 @@ def generate_video():
             image_file.save(image_path)
 
         if mode == 'image':
-            task = tm.create_task(mode, prompt, model, ratio, '')
+            image_model = data.get('image_model', 'imagen4-fast')
+            task = tm.create_task(mode, prompt, image_model, ratio, '')
             output_path = OUTPUT_FOLDER / f"{task['id']}.png"
             task['output_path'] = str(output_path)
             tm.lock_user(user_ip, task['id'])
@@ -77,7 +98,7 @@ def generate_video():
             gen = ImagenGenerator()
             tm.run_in_background(
                 gen.generate,
-                (task, prompt, model, image_ratio, str(output_path),
+                (task, prompt, image_model, image_ratio, str(output_path),
                  negative_prompt or None, enhance_prompt),
                 user_ip, task['id'],
             )
@@ -94,7 +115,8 @@ def generate_video():
                 gen.generate_long,
                 (task, prompt, model, total_seconds, ratio, str(output_path),
                  str(image_path) if image_path else None,
-                 negative_prompt or None, enhance_prompt),
+                 negative_prompt or None, enhance_prompt,
+                 generate_audio, resolution),
                 user_ip, task['id'],
             )
 
@@ -111,7 +133,8 @@ def generate_video():
                 gen.generate,
                 (task, prompt, model, duration, ratio, str(output_path),
                  str(image_path) if image_path else None,
-                 negative_prompt or None, enhance_prompt),
+                 negative_prompt or None, enhance_prompt,
+                 generate_audio, resolution),
                 user_ip, task['id'],
             )
 
@@ -146,6 +169,8 @@ def extend_video():
         model = data.get('model', 'veo3.1')
         ratio = data.get('ratio', '16:9')
         duration = int(data.get('duration', 8))
+        generate_audio = data.get('generate_audio', 'true') == 'true'
+        resolution = data.get('resolution', '1080p')
 
         if not prompt:
             return jsonify({'error': 'Please enter a prompt'}), 400
@@ -179,7 +204,8 @@ def extend_video():
             (task, prompt, model, duration, ratio, str(output_path),
              str(video_path) if video_path else None,
              str(image_path) if image_path else None,
-             negative_prompt or None, enhance_prompt),
+             negative_prompt or None, enhance_prompt,
+             generate_audio, resolution),
             user_ip, task['id'],
         )
 

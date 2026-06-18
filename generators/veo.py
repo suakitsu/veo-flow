@@ -2,6 +2,7 @@
 Veo 视频生成器模块
 支持：短视频、视频延长（官方 SDK）、长视频拼接
 生成完成后自动写入 history_manager
+支持 Veo 3.1 原生音频、4K 分辨率、Timestamp Prompting
 """
 
 import os
@@ -12,7 +13,7 @@ from google.genai import types
 
 from generators.client import get_client
 from config import (
-    VEO_MODELS, OUTPUT_FOLDER,
+    VEO_MODELS, VEO_PRICING, OUTPUT_FOLDER,
     POLL_MAX_WAIT, POLL_INTERVALS, SEGMENT_DURATION,
 )
 
@@ -34,6 +35,37 @@ class VeoGenerator:
     @staticmethod
     def _resolve_model(model: str) -> str:
         return VEO_MODELS.get(model, model)
+
+    @staticmethod
+    def _estimate_cost(model: str, duration: int) -> float:
+        """预估单次生成成本（美元）"""
+        price = VEO_PRICING.get(model, 0.40)
+        return round(price * duration, 2)
+
+    @staticmethod
+    def _build_video_config(duration: int, aspect_ratio: str,
+                            negative_prompt: str = None,
+                            enhance_prompt: bool = False,
+                            generate_audio: bool = True,
+                            resolution: str = '1080p'):
+        """构建 GenerateVideosConfig，兼容新旧 SDK 字段"""
+        config_kwargs = {
+            'number_of_videos': 1,
+            'duration_seconds': duration,
+            'aspect_ratio': aspect_ratio,
+            'negative_prompt': negative_prompt,
+            'enhance_prompt': enhance_prompt,
+        }
+        # Veo 3.1+ 支持原生音频与分辨率
+        try:
+            config_kwargs['generate_audio'] = generate_audio
+        except Exception:
+            pass
+        try:
+            config_kwargs['resolution'] = resolution
+        except Exception:
+            pass
+        return types.GenerateVideosConfig(**config_kwargs)
 
     @staticmethod
     def _poll_operation(client, operation, task: dict, label: str = 'Generating'):
@@ -87,8 +119,9 @@ class VeoGenerator:
     def generate(self, task: dict, prompt: str, model: str = 'veo3.1',
                  duration: int = 8, aspect_ratio: str = "16:9",
                  output_path: str = None, reference_image: str = None,
-                 negative_prompt: str = None, enhance_prompt: bool = False):
-        """生成单段短视频"""
+                 negative_prompt: str = None, enhance_prompt: bool = False,
+                 generate_audio: bool = True, resolution: str = '1080p'):
+        """生成单段短视频（支持原生音频与 4K）"""
         from services import history_manager as hm
         model_id = self._resolve_model(model)
         client = get_client()
@@ -97,14 +130,12 @@ class VeoGenerator:
         task['status'] = 'running'
         task['message'] = 'Sending request...'
         task['progress'] = 10
+        task['cost_estimate'] = self._estimate_cost(model, duration)
 
         source = types.GenerateVideosSource(prompt=prompt)
-        config = types.GenerateVideosConfig(
-            number_of_videos=1,
-            duration_seconds=duration,
-            aspect_ratio=aspect_ratio,
-            negative_prompt=negative_prompt,
-            enhance_prompt=enhance_prompt,
+        config = self._build_video_config(
+            duration, aspect_ratio, negative_prompt, enhance_prompt,
+            generate_audio, resolution,
         )
 
         if reference_image and os.path.exists(reference_image):
@@ -157,8 +188,9 @@ class VeoGenerator:
                         duration: int = 8, aspect_ratio: str = "16:9",
                         output_path: str = None, video_path: str = None,
                         image_path: str = None,
-                        negative_prompt: str = None, enhance_prompt: bool = False):
-        """基于已有视频/图片延长生成"""
+                        negative_prompt: str = None, enhance_prompt: bool = False,
+                        generate_audio: bool = True, resolution: str = '1080p'):
+        """基于已有视频/图片延长生成（支持原生音频与 4K）"""
         from services import history_manager as hm
         model_id = self._resolve_model(model)
         client = get_client()
@@ -167,6 +199,7 @@ class VeoGenerator:
         task['status'] = 'running'
         task['message'] = 'Sending request...'
         task['progress'] = 10
+        task['cost_estimate'] = self._estimate_cost(model, duration)
 
         source = types.GenerateVideosSource(prompt=prompt)
         if video_path and os.path.exists(video_path):
@@ -174,12 +207,9 @@ class VeoGenerator:
         elif image_path and os.path.exists(image_path):
             source.image = types.Image.from_file(location=image_path)
 
-        config = types.GenerateVideosConfig(
-            number_of_videos=1,
-            duration_seconds=duration,
-            aspect_ratio=aspect_ratio,
-            negative_prompt=negative_prompt,
-            enhance_prompt=enhance_prompt,
+        config = self._build_video_config(
+            duration, aspect_ratio, negative_prompt, enhance_prompt,
+            generate_audio, resolution,
         )
 
         task['message'] = 'Generating video extension...'
@@ -225,8 +255,9 @@ class VeoGenerator:
     def generate_long(self, task: dict, prompt: str, model: str,
                       total_seconds: int, aspect_ratio: str,
                       output_path: str, reference_image: str = None,
-                      negative_prompt: str = None, enhance_prompt: bool = False):
-        """分段生成 + ffmpeg 拼接长视频"""
+                      negative_prompt: str = None, enhance_prompt: bool = False,
+                      generate_audio: bool = True, resolution: str = '1080p'):
+        """分段生成 + ffmpeg 拼接长视频（支持原生音频与 4K）"""
         from services import history_manager as hm
         model_id = self._resolve_model(model)
         client = get_client()
@@ -235,6 +266,7 @@ class VeoGenerator:
 
         task['message'] = f'Long video: {num_segments} segments needed'
         task['progress'] = 5
+        task['cost_estimate'] = self._estimate_cost(model, total_seconds)
 
         segment_files = []
         last_frame_path = None
@@ -247,12 +279,9 @@ class VeoGenerator:
                 f"{prompt}. Continue from the previous frame, maintain exact same scene and motion."
 
             source = types.GenerateVideosSource(prompt=seg_prompt)
-            config = types.GenerateVideosConfig(
-                number_of_videos=1,
-                duration_seconds=SEGMENT_DURATION,
-                aspect_ratio=aspect_ratio,
-                negative_prompt=negative_prompt,
-                enhance_prompt=enhance_prompt,
+            config = self._build_video_config(
+                SEGMENT_DURATION, aspect_ratio, negative_prompt, enhance_prompt,
+                generate_audio, resolution,
             )
 
             try:

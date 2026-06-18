@@ -14,17 +14,55 @@ OUTPUT_FOLDER = BASE_DIR / 'outputs'
 TEMPLATE_FOLDER = BASE_DIR / 'templates'
 CONFIG_FILE = BASE_DIR / 'config.json'
 
-# Veo 模型 ID 映射
+# Veo 模型 ID 映射（含 Veo 3.1 Lite 新档位）
 VEO_MODELS = {
     'veo2': 'veo-2.0-generate-001',
     'veo3': 'veo-3.0-generate-001',
     'veo3-fast': 'veo-3.0-fast-generate-001',
     'veo3.1': 'veo-3.1-generate-001',
     'veo3.1-fast': 'veo-3.1-fast-generate-001',
+    'veo3.1-lite': 'veo-3.1-lite-generate-preview',
 }
 
-# Gemini 模型列表
+# Veo 模型定价（美元/秒）—— 用于成本预估
+VEO_PRICING = {
+    'veo2': 0.50,
+    'veo3': 0.40,
+    'veo3-fast': 0.20,
+    'veo3.1': 0.40,
+    'veo3.1-fast': 0.15,
+    'veo3.1-lite': 0.05,
+}
+
+# Imagen 模型 ID 映射（Imagen 4 三档）
+IMAGEN_MODELS = {
+    'imagen3': 'imagen-3.0-generate-002',
+    'imagen3-fast': 'imagen-3.0-fast-generate-001',
+    'imagen4': 'imagen-4.0-generate-001',
+    'imagen4-fast': 'imagen-4.0-fast-generate-001',
+    'imagen4-ultra': 'imagen-4.0-ultra-generate-001',
+}
+
+# Imagen 模型定价（美元/张）
+IMAGEN_PRICING = {
+    'imagen3': 0.04,
+    'imagen3-fast': 0.02,
+    'imagen4': 0.04,
+    'imagen4-fast': 0.02,
+    'imagen4-ultra': 0.06,
+}
+
+DEFAULT_IMAGEN_MODEL = 'imagen4-fast'
+
+# Gemini 模型列表（含 Gemini 3.x 系列）
 GEMINI_MODELS = {
+    # Gemini 3.5 (最新, I/O 2026)
+    'gemini-3.5-flash': 'Gemini 3.5 Flash',
+    # Gemini 3.x
+    'gemini-3-pro': 'Gemini 3 Pro',
+    'gemini-3-flash': 'Gemini 3 Flash',
+    'gemini-3.1-pro': 'Gemini 3.1 Pro',
+    'gemini-3.1-flash-lite': 'Gemini 3.1 Flash Lite',
     # Gemini 2.5 (Stable GA)
     'gemini-2.5-pro': 'Gemini 2.5 Pro',
     'gemini-2.5-flash': 'Gemini 2.5 Flash',
@@ -34,7 +72,32 @@ GEMINI_MODELS = {
     'gemini-2.0-flash-lite-001': 'Gemini 2.0 Flash Lite',
 }
 
-DEFAULT_GEMINI_MODEL = 'gemini-2.5-flash'
+DEFAULT_GEMINI_MODEL = 'gemini-3.5-flash'
+
+# Gemini 原生图像模型（Nano Banana 系列）
+GEMINI_IMAGE_MODELS = {
+    'nano-banana-2': 'gemini-3.1-flash-image',
+    'nano-banana-pro': 'gemini-3-pro-image',
+    'nano-banana': 'gemini-2.5-flash-image',
+}
+
+# Gemini TTS 模型与预置音色
+GEMINI_TTS_MODELS = {
+    'gemini-3.1-flash-tts': 'gemini-3.1-flash-tts-preview',
+    'gemini-2.5-flash-tts': 'gemini-2.5-flash-preview-tts',
+    'gemini-2.5-pro-tts': 'gemini-2.5-pro-preview-tts',
+}
+
+DEFAULT_TTS_MODEL = 'gemini-3.1-flash-tts'
+
+# Gemini TTS 30 个预置音色
+GEMINI_TTS_VOICES = [
+    'Kore', 'Puck', 'Charon', 'Fenrir', 'Leda', 'Orus', 'Aoede', 'Zephyr',
+    'Callirrhoe', 'Autonoe', 'Enceladus', 'Iapetus', 'Umbriel', 'Algieba',
+    'Despina', 'Erinome', 'Gacrux', 'Pulcherrima', 'Achird', 'Zubenelgenubi',
+    'Vindemiatrix', 'Sadachbia', 'Sadaltager', 'Sulafat', 'Laomedeia',
+    'Achernar', 'Schedar', 'Rasalgethi', 'Nashira', 'Enif',
+]
 
 # Gemini 风格提示词模板
 STYLE_PROMPTS = {

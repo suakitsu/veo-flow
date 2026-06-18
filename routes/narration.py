@@ -1,8 +1,9 @@
 """
 Narration (文配视频) Route
 流程：
-  Auto:   topic -> Gemini生成文案+图片prompt -> Imagen生图 -> gTTS语音 -> ffmpeg合成视频
-  Manual: 用户上传图片+输入文案 -> gTTS语音 -> ffmpeg合成视频
+  Auto:   topic -> Gemini生成文案+图片prompt -> Imagen 4 生图 -> Gemini TTS 语音 -> ffmpeg合成视频
+  Manual: 用户上传图片+输入文案 -> Gemini TTS 语音 -> ffmpeg合成视频
+支持 Gemini TTS（30 预置音色、多说话人、风格控制）
 """
 
 import os
@@ -13,14 +14,17 @@ import tempfile
 from pathlib import Path
 from flask import Blueprint, request, jsonify, send_file
 
-from config import UPLOAD_FOLDER, OUTPUT_FOLDER
+from config import (
+    UPLOAD_FOLDER, OUTPUT_FOLDER,
+    GEMINI_TTS_MODELS, DEFAULT_TTS_MODEL, GEMINI_TTS_VOICES,
+)
 
-bp = Blueprint('narration', __name__, url_prefix='/api')
+bp = Blueprint('narration', __name__)
 
 # ------------------- 工具函数 -------------------
 
 def _tts_gtts(text: str, output_path: str, lang: str = 'zh') -> bool:
-    """使用 gTTS 生成音频（aka MiMo 引擎）"""
+    """使用 gTTS 生成音频（兜底方案）"""
     try:
         from gtts import gTTS
         tts = gTTS(text=text, lang=lang, slow=False)
@@ -31,91 +35,185 @@ def _tts_gtts(text: str, output_path: str, lang: str = 'zh') -> bool:
         return False
 
 
-def _tts_gemini(text: str, output_path: str, voice: str = 'Kore') -> bool:
-    """使用 Gemini TTS（google-cloud-texttospeech）生成音频"""
+def _tts_gemini(text: str, output_path: str, voice: str = 'Kore',
+                model: str = None, style: str = None) -> bool:
+    """使用 Gemini TTS 生成音频（30 预置音色、风格控制、多语言）
+
+    Args:
+        text: 要合成的文本（支持中英文等 70+ 语言自动检测）
+        voice: 预置音色名（Kore/Puck/Charon/Fenrir/Leda/Orus/Aoede/Zephyr 等 30 个）
+        model: TTS 模型别名，默认 gemini-3.1-flash-tts
+        style: 风格提示（如 "warm and calm tone" 或内联标签 [whispers] [laughs]）
+    """
     try:
-        from google.cloud import texttospeech
-        import traceback
-        
-        print(f"[Gemini TTS] Starting with text: {text[:20]}...")
-        
-        client = texttospeech.TextToSpeechClient()
-        print("[Gemini TTS] Client created")
-        
-        synthesis_input = texttospeech.SynthesisInput(text=text)
-        voice_params = texttospeech.VoiceSelectionParams(
-            language_code='cmn-CN',
-            name=f'cmn-CN-Wavenet-A',
+        from google import genai
+        from google.genai import types
+        from generators.client import get_client
+
+        tts_model_id = GEMINI_TTS_MODELS.get(model, GEMINI_TTS_MODELS[DEFAULT_TTS_MODEL])
+        # 校验音色
+        if voice not in GEMINI_TTS_VOICES:
+            voice = 'Kore'
+
+        print(f"[Gemini TTS] model={tts_model_id}, voice={voice}, text={text[:30]}...")
+
+        client = get_client()
+
+        # 组装文本（支持风格控制）
+        contents = text
+        if style:
+            contents = f"{style}\n{text}"
+
+        response = client.models.generate_content(
+            model=tts_model_id,
+            contents=contents,
+            config=types.GenerateContentConfig(
+                response_modalities=["AUDIO"],
+                speech_config=types.SpeechConfig(
+                    voice_config=types.VoiceConfig(
+                        prebuilt_voice_config=types.PrebuiltVoiceConfig(
+                            voice_name=voice,
+                        )
+                    )
+                ),
+            ),
         )
-        audio_config = texttospeech.AudioConfig(
-            audio_encoding=texttospeech.AudioEncoding.MP3,
-        )
-        print("[Gemini TTS] Sending request...")
-        
-        response = client.synthesize_speech(
-            input=synthesis_input,
-            voice=voice_params,
-            audio_config=audio_config,
-        )
-        print(f"[Gemini TTS] Response received, audio size: {len(response.audio_content)} bytes")
-        
+
+        # 提取音频数据
+        audio_data = None
+        if (response.candidates and
+                response.candidates[0].content and
+                response.candidates[0].content.parts):
+            for part in response.candidates[0].content.parts:
+                inline = getattr(part, 'inline_data', None)
+                if inline and inline.data:
+                    audio_data = inline.data
+                    break
+
+        if not audio_data:
+            print("[Gemini TTS] No audio data in response, falling back to gTTS")
+            lang = 'zh' if any(ord(c) > 127 for c in text) else 'en'
+            return _tts_gtts(text, output_path, lang)
+
         with open(output_path, 'wb') as f:
-            f.write(response.audio_content)
-        print(f"[Gemini TTS] Audio saved to {output_path}")
+            f.write(audio_data)
+        print(f"[Gemini TTS] Audio saved to {output_path} ({len(audio_data)} bytes)")
         return True
+
     except Exception as e:
         print(f"[Gemini TTS] Error: {e}")
-        print(f"[Gemini TTS] Traceback: {traceback.format_exc()}")
+        import traceback
+        traceback.print_exc()
         print(f"[Narration] Gemini TTS error: {e}, falling back to gTTS")
-        return _tts_gtts(text, output_path)
+        lang = 'zh' if any(ord(c) > 127 for c in text) else 'en'
+        return _tts_gtts(text, output_path, lang)
+
+
+def _tts_gemini_multi(speakers_text: str, output_path: str,
+                      speakers_map: dict, model: str = None) -> bool:
+    """多说话人 Gemini TTS（对话/播客场景）
+
+    Args:
+        speakers_text: 形如 "Host: Welcome!\\nGuest: Thanks!" 的对话文本
+        speakers_map: {"Host": "Kore", "Guest": "Puck"} 角色到音色的映射
+        model: TTS 模型别名
+    """
+    try:
+        from google import genai
+        from google.genai import types
+        from generators.client import get_client
+
+        tts_model_id = GEMINI_TTS_MODELS.get(model, GEMINI_TTS_MODELS[DEFAULT_TTS_MODEL])
+        client = get_client()
+
+        # 构建多说话人 voice_config
+        speaker_configs = []
+        for name, voice in speakers_map.items():
+            if voice not in GEMINI_TTS_VOICES:
+                voice = 'Kore'
+            speaker_configs.append(
+                types.SpeakerVoiceConfig(
+                    speaker=name,
+                    voice_config=types.VoiceConfig(
+                        prebuilt_voice_config=types.PrebuiltVoiceConfig(
+                            voice_name=voice,
+                        )
+                    ),
+                )
+            )
+
+        response = client.models.generate_content(
+            model=tts_model_id,
+            contents=speakers_text,
+            config=types.GenerateContentConfig(
+                response_modalities=["AUDIO"],
+                speech_config=types.SpeechConfig(
+                    multi_speaker_voice_config=types.MultiSpeakerVoiceConfig(
+                        speaker_voice_configs=speaker_configs,
+                    )
+                ),
+            ),
+        )
+
+        audio_data = None
+        if (response.candidates and
+                response.candidates[0].content and
+                response.candidates[0].content.parts):
+            for part in response.candidates[0].content.parts:
+                inline = getattr(part, 'inline_data', None)
+                if inline and inline.data:
+                    audio_data = inline.data
+                    break
+
+        if not audio_data:
+            return False
+
+        with open(output_path, 'wb') as f:
+            f.write(audio_data)
+        return True
+
+    except Exception as e:
+        print(f"[Gemini TTS Multi] Error: {e}")
+        return False
 
 
 def _tts_openai(text: str, output_path: str, voice: str = 'alloy') -> bool:
-    """使用 MiMo TTS API"""
+    """使用 MiMo TTS API（兼容 OpenAI 格式）"""
     try:
         import requests
         import base64
-        import json
         import datetime
-        
-        # 写入日志文件
+
         with open('tts_debug.log', 'a', encoding='utf-8') as log:
             log.write(f"\n[{datetime.datetime.now()}]\n")
             log.write(f"Received text: {text!r}\n")
             log.write(f"Text length: {len(text)}\n")
-            log.write(f"Text bytes: {text.encode('utf-8')!r}\n")
-        
+
         print(f"[_tts_openai] Received text: {text!r}")
-        print(f"[_tts_openai] Text length: {len(text)}")
-        print(f"[_tts_openai] Text bytes: {text.encode('utf-8')!r}")
-        
-        # 直接从 config.json 读取，避免线程问题
+
         with open('config.json', 'r') as f:
             cfg = json.load(f)
             key = cfg.get('api_key', '')
             base = cfg.get('api_base_url', 'https://api.xiaomimimo.com/v1')
-        
-        print(f"[TTS Debug] api_key present: {bool(key)}, base_url: {base}")
+
         if not key:
             print("[TTS Debug] No API key!")
             return False
-            
+
         url = f"{base.rstrip('/')}/chat/completions"
-        
-        # MiMo TTS 使用 api-key header 和特殊格式
+
         headers = {
             "api-key": key,
             "Content-Type": "application/json"
         }
-        
-        # 映射 voice 到 MiMo 音色
+
         voice_map = {
             'alloy': 'mimo_default',
             'zh': 'default_zh',
             'en': 'default_eh'
         }
         mimo_voice = voice_map.get(voice, voice) if voice else 'mimo_default'
-        
+
         payload = {
             "model": "mimo-v2-tts",
             "messages": [
@@ -127,11 +225,10 @@ def _tts_openai(text: str, output_path: str, voice: str = 'alloy') -> bool:
                 "voice": mimo_voice
             }
         }
-        
+
         response = requests.post(url, json=payload, headers=headers, timeout=30)
         response.raise_for_status()
-        
-        # 解析 JSON 响应，提取音频数据
+
         data = response.json()
         if 'choices' in data and len(data['choices']) > 0:
             msg = data['choices'][0].get('message', {})
@@ -140,8 +237,8 @@ def _tts_openai(text: str, output_path: str, voice: str = 'alloy') -> bool:
                 with open(output_path, 'wb') as f:
                     f.write(audio_data)
                 return True
-        
-        print(f"[Narration] MiMo TTS: no audio data in response, msg keys: {msg.keys()}")
+
+        print(f"[Narration] MiMo TTS: no audio data in response")
         return False
     except Exception as e:
         print(f"[Narration] MiMo TTS error: {e}")
@@ -283,7 +380,7 @@ def auto_narration():
         system_prompt = f"""你是一个优秀的视频文案创作者。
 用户提供主题，你需要生成：
 1. 一段{duration}秒左右的旁白/解说文案（自然流畅，适合配音）
-2. {image_count}个视觉场景的图片生成提示词（英文，适合 Imagen AI）
+2. {image_count}个视觉场景的图片生成提示词（英文，适合 Imagen 4 AI）
 
 请严格用以下 JSON 格式回复（不要有多余的文字）：
 {{
@@ -327,7 +424,7 @@ def auto_narration():
 @bp.route('/narration/ai-image', methods=['POST'])
 def ai_image():
     """
-    用 Imagen 根据 prompt 生成图片，保存到 uploads，返回 filename + url
+    用 Imagen 4 根据 prompt 生成图片，保存到 uploads，返回 filename + url
     """
     data = request.json or {}
     prompt = data.get('prompt', '').strip()
@@ -336,6 +433,7 @@ def ai_image():
 
     try:
         from generators.imagen import ImagenGenerator
+        from config import DEFAULT_IMAGEN_MODEL
         task = {
             'id': f'narr_img_{uuid.uuid4().hex[:8]}',
             'status': 'pending',
@@ -347,8 +445,8 @@ def ai_image():
         out_path = str(UPLOAD_FOLDER / filename)
 
         gen = ImagenGenerator()
-        # 使用 imagen-3.0-generate-002 模型（支持 enhance_prompt）
-        gen.generate(task, prompt, 'imagen-3.0-generate-002', '16:9', out_path)
+        # 默认使用 Imagen 4 Fast（性价比最高）
+        gen.generate(task, prompt, DEFAULT_IMAGEN_MODEL, '16:9', out_path)
 
         return jsonify({
             'filename': filename,
@@ -359,23 +457,34 @@ def ai_image():
         return jsonify({'error': str(e)}), 500
 
 
+@bp.route('/narration/tts/voices')
+def get_tts_voices():
+    """获取 Gemini TTS 可用音色列表"""
+    return jsonify({
+        'voices': GEMINI_TTS_VOICES,
+        'models': [{'id': k, 'name': v} for k, v in GEMINI_TTS_MODELS.items()],
+        'default_model': DEFAULT_TTS_MODEL,
+    })
+
+
 @bp.route('/narration', methods=['POST'])
 def create_narration():
     """
     合成最终视频：接受 text + images(filenames) + voice + engine
     同步执行（通常几秒内完成），返回 video_url
+
+    engine 可选：
+      - gemini: Gemini TTS（30 音色，70+ 语言，推荐）
+      - openai: MiMo TTS（中文优化）
+      - gtts:   gTTS（兜底）
     """
     data = request.json or {}
     text = data.get('text', '').strip()
     images = data.get('images', [])   # list of filenames in UPLOAD_FOLDER
-    voice = data.get('voice', 'mimo_default')
-    engine = data.get('engine', 'openai')  # 默认使用 MiMo TTS
-
-    # 调试信息
-    print(f"[TTS Debug] Raw request data: {request.get_data(as_text=True)!r}")
-    print(f"[TTS Debug] Parsed text: {text!r}")
-    print(f"[TTS Debug] Text type: {type(text)}")
-    print(f"[TTS Debug] Text bytes: {text.encode('utf-8')!r}")
+    voice = data.get('voice', 'Kore')
+    engine = data.get('engine', 'gemini')  # 默认使用 Gemini TTS
+    tts_model = data.get('tts_model')  # 可选 TTS 模型别名
+    style = data.get('style')  # 可选风格提示
 
     if not text:
         return jsonify({'error': 'Text is required'}), 400
@@ -383,22 +492,18 @@ def create_narration():
         return jsonify({'error': 'At least one image is required'}), 400
 
     task_id = uuid.uuid4().hex[:10]
-    
-    print(f"[TTS Debug] Received text: {text!r}")
-    print(f"[TTS Debug] Text length: {len(text)}")
-    print(f"[TTS Debug] Text bytes: {text.encode('utf-8')!r}")
 
     # 解析语言
     lang = 'zh' if any(ord(c) > 127 for c in text) else 'en'
 
     # TTS
-    # 根据引擎选择正确的音频格式扩展名
-    audio_ext = '.mp3' if engine == 'gemini' else '.wav'
+    # Gemini TTS 输出 PCM/WAV，MiMo 输出 WAV，gTTS 输出 MP3
+    audio_ext = '.wav' if engine in ('gemini', 'openai') else '.mp3'
     audio_path = str(OUTPUT_FOLDER / f"narr_{task_id}_audio{audio_ext}")
     if engine == 'openai':
         ok = _tts_openai(text, audio_path, voice)
     elif engine == 'gemini':
-        ok = _tts_gemini(text, audio_path, voice)
+        ok = _tts_gemini(text, audio_path, voice, tts_model, style)
     else:
         ok = _tts_gtts(text, audio_path, lang)
 
@@ -419,12 +524,6 @@ def create_narration():
     output_filename = f"narr_{task_id}.mp4"
     output_path = str(OUTPUT_FOLDER / output_filename)
     success = _create_slideshow(image_paths, audio_path, output_path)
-
-    # 清理音频 - 临时禁用以便调试
-    # try:
-    #     os.remove(audio_path)
-    # except OSError:
-    #     pass
 
     if not success:
         return jsonify({'error': 'Video synthesis failed. Please check ffmpeg is installed.'}), 500

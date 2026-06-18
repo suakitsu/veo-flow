@@ -22,30 +22,33 @@
 
 ## ✨ Features
 
-- **Short Video** — 4/6/8 seconds choosing models and aspect ratios.
+- **Short Video** — 4/6/8 seconds choosing models and aspect ratios. Native audio + 4K support (Veo 3.1).
 - **Long Video** — Auto-segmentation with frame-level continuity using frame-to-frame technology.
 - **Extend Video** — Upload any video/last frame, the AI continues the scene naturally.
-- **Narration (🎙️ NEW)** — Auto-mode (Topic to full video) or Manual-mode (Your photos + scripts).
-  - Supports **Gemini TTS** (emotional WaveNet voices) and **MiMo TTS** (Chinese optimized).
+- **Narration (🎙️)** — Auto-mode (Topic to full video) or Manual-mode (Your photos + scripts).
+  - Supports **Gemini TTS** (30 voices, 70+ languages, multi-speaker, style control) and **MiMo TTS** (Chinese optimized).
   - Auto-segment long text for TTS compatibility.
-- **Storyboard (🎬 NEW)** — Multi-shot batch generation with auto-concatenation (FFmpeg).
-- **Dashboard (📊 NEW)** — Track cost, success rates, and full generation history.
-- **AI Image Generation (🖼️ NEW)** — Imagen 3 integration for custom images.
-- **AI Assistant** — Image analysis, prompt refinement, creative chat with Gemini.
+- **Storyboard (🎬)** — Multi-shot batch generation with auto-concatenation (FFmpeg).
+- **Dashboard (📊)** — Track cost, success rates, and full generation history.
+- **AI Image Generation (🖼️)** — Imagen 4 (Fast/Standard/Ultra) integration for custom images.
+- **AI Assistant** — Image analysis, prompt refinement, creative chat with Gemini 3.5 Flash.
 - **Prompt Templates** — 19+ Pro templates for products, anime, landscapes, etc.
 
 ## 💰 Pricing
 
 | Model | Price | Notes |
 |-------|-------|-------|
-| Veo 3.1 | $0.40/sec | Latest model, best quality |
-| Veo 3.1 Fast | $0.20/sec | Faster, better value ⭐ |
+| Veo 3.1 | $0.40/sec | Latest model, best quality, 4K + native audio |
+| Veo 3.1 Fast | $0.15/sec | Faster, better value ⭐ |
+| Veo 3.1 Lite | $0.05/sec | Cheapest, ideal for iteration |
 | Veo 3 | $0.40/sec | Stable release |
 | Veo 2 | $0.50/sec | Legacy, better compatibility |
-| Imagen 3 | ~$0.04/image | High quality |
-| Imagen 3 Fast | ~$0.02/image | Quick generation |
+| Imagen 4 Ultra | $0.06/image | 2K output, best quality |
+| Imagen 4 Standard | $0.04/image | Balanced |
+| Imagen 4 Fast | $0.02/image | Quick generation ⭐ |
+| Gemini TTS | from $0.50/$10 per 1M tokens | 30 voices, 70+ languages |
 
-**Billing:** Per second of video, not per API call. 8-second clip = $3.20 (Veo 3.1)
+**Billing:** Per second of video, not per API call. 8-second clip = $3.20 (Veo 3.1), $1.20 (Veo 3.1 Fast), or $0.40 (Veo 3.1 Lite). Disabling native audio saves ~33%.
 
 Cost estimate shown before every generation. Confirm to proceed.
 
@@ -53,7 +56,7 @@ Cost estimate shown before every generation. Confirm to proceed.
 
 ### Requirements
 
-- Python 3.8+
+- Python 3.10+ (required by google-genai SDK 1.x+)
 - FFmpeg (for long video concatenation)
 - GCP Service Account with Vertex AI API enabled
 
@@ -126,7 +129,7 @@ googleVideo/
 
 | Engine | Requirements | Best For |
 |--------|-------------|----------|
-| `gemini` | GCP credentials (`vertex.json`) | Emotional voices, English |
+| `gemini` | GCP credentials or API key | 30 voices, 70+ languages, multi-speaker, style control ⭐ |
 | `openai` | MiMo API key | Chinese text, no VPN needed |
 | `gtts` | Internet + gtts package | Fallback option |
 

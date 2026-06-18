@@ -1,0 +1,279 @@
+openapi: 3.0.3
+info:
+  title: Veo Flow API
+  description: AI Video & Image Generation Platform - Veo 3.1, Imagen 4, Gemini 3.5, Nano Banana, Gemini TTS
+  version: 2.0.0
+  contact:
+    name: Veo Flow
+    url: https://github.com/suakitsu/veo-flow
+
+servers:
+  - url: http://localhost:5000
+    description: Local development
+
+tags:
+  - name: Generate
+    description: Video and image generation
+  - name: Tasks
+    description: Task status and file download
+  - name: Narration
+    description: Text-to-video narration with TTS
+  - name: Nano Banana
+    description: Gemini native image generation and editing
+  - name: Gemini
+    description: AI assistant and prompt enhancement
+  - name: System
+    description: Models, templates, dashboard
+
+paths:
+  /api/models:
+    get:
+      tags: [System]
+      summary: List available Veo and Imagen models
+      responses:
+        '200':
+          description: Model list with pricing
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  veo_models:
+                    type: array
+                    items:
+                      type: object
+                  imagen_models:
+                    type: array
+                    items:
+                      type: object
+
+  /api/generate:
+    post:
+      tags: [Generate]
+      summary: Generate video or image
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                mode:
+                  type: string
+                  enum: [short, long, image]
+                prompt:
+                  type: string
+                model:
+                  type: string
+                ratio:
+                  type: string
+                duration:
+                  type: integer
+                generate_audio:
+                  type: boolean
+                resolution:
+                  type: string
+                  enum: [720p, 1080p, 4K]
+                negative_prompt:
+                  type: string
+                enhance_prompt:
+                  type: boolean
+                image:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Task created
+        '429':
+          description: User locked (another task running)
+
+  /api/extend:
+    post:
+      tags: [Generate]
+      summary: Extend existing video or image
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                prompt:
+                  type: string
+                model:
+                  type: string
+                video:
+                  type: string
+                  format: binary
+                last_frame:
+                  type: string
+                  format: binary
+                generate_audio:
+                  type: boolean
+                resolution:
+                  type: string
+      responses:
+        '200':
+          description: Task created
+
+  /api/task/{task_id}:
+    get:
+      tags: [Tasks]
+      summary: Get task status (polling)
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Task status
+        '404':
+          description: Task not found
+
+  /api/task/{task_id}/stream:
+    get:
+      tags: [Tasks]
+      summary: Stream task progress via SSE
+      description: |
+        Server-Sent Events endpoint. Pushes progress updates only on change.
+        Auto-closes when task completes, errors, or times out (30 min).
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: SSE stream
+          content:
+            text/event-stream:
+              schema:
+                type: object
+
+  /api/download/{task_id}:
+    get:
+      tags: [Tasks]
+      summary: Download generated file
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: File download
+        '404':
+          description: File not found
+
+  /api/narration/auto:
+    post:
+      tags: [Narration]
+      summary: Auto-generate narration text and image prompts from topic
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                topic:
+                  type: string
+                image_count:
+                  type: integer
+                duration:
+                  type: integer
+
+  /api/narration:
+    post:
+      tags: [Narration]
+      summary: Create narration video from text and images
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                text:
+                  type: string
+                images:
+                  type: array
+                  items:
+                    type: string
+                voice:
+                  type: string
+                  description: Gemini TTS voice name (Kore, Puck, etc.)
+                engine:
+                  type: string
+                  enum: [gemini, openai, gtts]
+                style:
+                  type: string
+                  description: Voice style hint or inline tags
+
+  /api/narration/tts/voices:
+    get:
+      tags: [Narration]
+      summary: List available Gemini TTS voices
+
+  /api/narration/tts/multi-speaker:
+    post:
+      tags: [Narration]
+      summary: Multi-speaker TTS for dialogue/podcast
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                text:
+                  type: string
+                  description: "Dialogue text, e.g. 'Host: Welcome!\\nGuest: Hi!'"
+                speakers:
+                  type: object
+                  description: "Speaker to voice mapping, e.g. {Host: Kore, Guest: Puck}"
+                model:
+                  type: string
+
+  /api/nano-banana/models:
+    get:
+      tags: [Nano Banana]
+      summary: List Nano Banana models
+
+  /api/nano-banana/generate:
+    post:
+      tags: [Nano Banana]
+      summary: Generate or edit image with Gemini native image model
+      description: Supports conversational multi-turn editing
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                prompt:
+                  type: string
+                model:
+                  type: string
+                  enum: [nano-banana-2, nano-banana-pro, nano-banana]
+                image:
+                  type: string
+                  format: binary
+                  description: Reference image for editing
+                conversation:
+                  type: string
+                  description: JSON array of conversation history
+
+  /api/tasks:
+    get:
+      tags: [Tasks]
+      summary: List all tasks
+
+  /api/history:
+    get:
+      tags: [System]
+      summary: Get generation history
+
+  /api/stats:
+    get:
+      tags: [System]
+      summary: Get dashboard statistics

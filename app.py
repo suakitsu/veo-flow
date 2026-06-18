@@ -25,7 +25,7 @@ _cors_origins = os.getenv('CORS_ORIGINS', 'http://localhost:5000,http://127.0.0.
 CORS(app, origins=[o.strip() for o in _cors_origins.split(',') if o.strip()])
 
 # 注册路由蓝图
-from routes import generate, gemini, tasks, proxy, narration, nano_banana
+from routes import generate, gemini, tasks, proxy, narration, nano_banana, docs
 
 app.register_blueprint(generate.bp)
 app.register_blueprint(gemini.bp)
@@ -33,6 +33,7 @@ app.register_blueprint(tasks.bp)
 app.register_blueprint(proxy.bp)
 app.register_blueprint(narration.bp)
 app.register_blueprint(nano_banana.bp)
+app.register_blueprint(docs.bp)
 
 # 启动文件清理后台服务
 from services.cleanup import start_cleanup_service

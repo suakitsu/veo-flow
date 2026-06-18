@@ -16,6 +16,7 @@ config.json
 # App Data
 uploads/
 outputs/
+logs/
 *.operation.json
 tasks.json
 tts_debug.log

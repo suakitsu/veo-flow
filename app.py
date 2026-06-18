@@ -11,6 +11,10 @@ from pathlib import Path
 from config import init_env, UPLOAD_FOLDER, OUTPUT_FOLDER
 init_env()
 
+# 初始化日志（在 Flask 之前，确保所有模块可用）
+from services.logger import setup_logging
+setup_logging()
+
 from flask import Flask, render_template, request, jsonify
 from flask_cors import CORS
 

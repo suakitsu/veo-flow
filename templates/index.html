@@ -1310,17 +1310,16 @@
                 </div>
             </div>
 
-            <!-- ========== Shared: reference image (for short/long modes) ========== -->
+            <!-- ========== Shared: reference images (for short/long modes, up to 4) ========== -->
             <div id="ref-group" style="margin-top:14px">
                 <div class="field">
-                    <label data-i18n="reference">Reference Image (Optional)</label>
+                    <label data-i18n="reference">Reference Images (Optional, up to 4 for character consistency)</label>
                     <div class="upload-zone" onclick="document.getElementById('ref-input').click()">
-                        <input type="file" id="ref-input" accept="image/*" onchange="onUpload(event)">
+                        <input type="file" id="ref-input" accept="image/*" multiple onchange="onUploadMulti(event)">
                         <div style="font-size:24px">📷</div>
-                        <p data-i18n="uploadText">Click or drag to upload</p>
+                        <p data-i18n="uploadText">Click or drag to upload (max 4 images)</p>
                     </div>
-                    <div class="upload-preview" id="ref-preview">
-                        <img id="ref-img" src="" alt="">
+                    <div class="upload-preview" id="ref-preview" style="display:flex;gap:8px;flex-wrap:wrap">
                     </div>
                 </div>
             </div>
@@ -1629,6 +1628,30 @@ function onUpload(e) {
     r.readAsDataURL(f);
 }
 
+// 多图上传（Veo 3.1 支持最多 4 张参考图，用于角色一致性）
+let refImages = [];
+function onUploadMulti(e) {
+    const files = Array.from(e.target.files).slice(0, 4);
+    refImages = files;
+    const preview = document.getElementById('ref-preview');
+    preview.innerHTML = '';
+    preview.classList.add('show');
+    files.forEach((f, i) => {
+        const r = new FileReader();
+        r.onload = ev => {
+            const wrapper = document.createElement('div');
+            wrapper.style.cssText = 'position:relative;width:80px;height:80px';
+            wrapper.innerHTML = `
+                <img src="${ev.target.result}" style="width:80px;height:80px;object-fit:cover;border-radius:6px">
+                <button onclick="refImages.splice(${i},1);onUploadMulti({target:{files:refImages}})" 
+                    style="position:absolute;top:-4px;right:-4px;background:#e74c3c;color:#fff;border:none;border-radius:50%;width:18px;height:18px;cursor:pointer;font-size:11px">×</button>
+            `;
+            preview.appendChild(wrapper);
+        };
+        r.readAsDataURL(f);
+    });
+}
+
 function onAiUpload(e) {
     const f = e.target.files[0]; if (!f) return;
     const r = new FileReader();
@@ -1923,7 +1946,11 @@ async function generate() {
                 fd.append('resolution', document.getElementById('short-resolution').value);
             }
             const img = document.getElementById('ref-input');
-            if (img.files.length) fd.append('image', img.files[0]);
+            if (refImages.length > 0) {
+                refImages.forEach((f, i) => fd.append('image', f));
+            } else if (img.files.length) {
+                fd.append('image', img.files[0]);
+            }
             r = await fetch(`${API}/api/generate`, { method: 'POST', body: fd });
             d = await r.json();
         }

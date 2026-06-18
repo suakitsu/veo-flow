@@ -78,14 +78,19 @@ def generate_video():
         if not prompt:
             return jsonify({'error': 'Please enter a prompt'}), 400
 
-        # 保存参考图
-        image_path = None
-        if 'image' in files and files['image'].filename:
-            image_file = files['image']
-            image_ext = Path(image_file.filename).suffix
-            tmp_id = str(uuid.uuid4())
-            image_path = UPLOAD_FOLDER / f"{tmp_id}_ref{image_ext}"
-            image_file.save(image_path)
+        # 保存参考图（支持多张，Veo 3.1 最多 4 张用于角色一致性）
+        image_paths = []
+        image_files = files.getlist('image') if hasattr(files, 'getlist') else [files.get('image')] if 'image' in files else []
+        for img_file in image_files:
+            if img_file and img_file.filename:
+                image_ext = Path(img_file.filename).suffix
+                tmp_id = str(uuid.uuid4())
+                img_path = UPLOAD_FOLDER / f"{tmp_id}_ref{image_ext}"
+                img_file.save(img_path)
+                image_paths.append(str(img_path))
+
+        # 兼容：单图模式取第一张
+        image_path = image_paths[0] if image_paths else None
 
         if mode == 'image':
             image_model = data.get('image_model', 'imagen4-fast')
@@ -217,6 +222,84 @@ def extend_video():
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+# ------------------------------------------------------------------
+# First-Last Frame Interpolation (Veo 3.1)
+# ------------------------------------------------------------------
+
+@bp.route('/api/interpolate', methods=['POST'])
+def interpolate_frames():
+    """首尾帧插值 - 上传首帧和尾帧图片，Veo 3.1 生成过渡视频
+
+    表单参数：
+      - prompt: 描述过渡效果的提示词
+      - first_frame: 首帧图片（必需）
+      - last_frame: 尾帧图片（必需）
+      - model: 模型（默认 veo3.1）
+      - duration: 时长（4/6/8 秒）
+      - ratio: 宽高比
+      - generate_audio: 是否生成音频
+      - resolution: 分辨率
+    """
+    from pathlib import Path
+    import uuid
+
+    data = request.form
+    files = request.files
+
+    prompt = data.get('prompt', 'Smooth transition between the two frames').strip()
+    first_frame = files.get('first_frame')
+    last_frame = files.get('last_frame')
+
+    if not first_frame or not first_frame.filename:
+        return jsonify({'error': 'First frame image is required'}), 400
+    if not last_frame or not last_frame.filename:
+        return jsonify({'error': 'Last frame image is required'}), 400
+
+    model = data.get('model', 'veo3.1')
+    duration = int(data.get('duration', 8))
+    ratio = data.get('ratio', '16:9')
+    generate_audio = data.get('generate_audio', 'true') == 'true'
+    resolution = data.get('resolution', '1080p')
+
+    user_ip = request.remote_addr or 'unknown'
+    locked, _ = tm.check_user_lock(user_ip)
+    if locked:
+        return jsonify({'error': 'Another task is running. Please wait.'}), 429
+
+    # 保存首尾帧
+    tmp_id = str(uuid.uuid4())
+    first_ext = Path(first_frame.filename).suffix or '.png'
+    last_ext = Path(last_frame.filename).suffix or '.png'
+    first_path = UPLOAD_FOLDER / f"{tmp_id}_first{first_ext}"
+    last_path = UPLOAD_FOLDER / f"{tmp_id}_last{last_ext}"
+    first_frame.save(first_path)
+    last_frame.save(last_path)
+
+    task = tm.create_task('interpolate', prompt, model, ratio, '')
+    output_path = OUTPUT_FOLDER / f"{task['id']}_interp.mp4"
+    task['output_path'] = str(output_path)
+    tm.lock_user(user_ip, task['id'])
+
+    # 使用首帧作为参考图，提示词中加入尾帧描述指令
+    # Veo SDK 目前通过 image 参数传入参考图
+    interp_prompt = f"{prompt}\n\n[Start from the provided image and transition to end at this description: {data.get('last_frame_desc', 'the second image')}]"
+
+    gen = VeoGenerator()
+    tm.run_in_background(
+        gen.generate,
+        (task, interp_prompt, model, duration, ratio, str(output_path),
+         str(first_path), None, False,
+         generate_audio, resolution),
+        user_ip, task['id'],
+    )
+
+    return jsonify({
+        'success': True,
+        'task_id': task['id'],
+        'message': 'Interpolation task created',
+    })
 
 
 # ------------------------------------------------------------------

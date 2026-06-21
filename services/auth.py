@@ -10,7 +10,6 @@ API 鉴权中间件
 请求方式：
   Header: Authorization: Bearer your-secret-key
   或:     X-API-Key: your-secret-key
-  或:     Query: ?api_key=your-secret-key
 """
 
 import os
@@ -25,40 +24,80 @@ log = get_logger(__name__)
 # 从环境变量读取 API Key（留空则禁用鉴权）
 API_KEY = os.getenv('API_KEY', '').strip()
 
-# 不需要鉴权的路径前缀（只读端点 + 静态资源）
-PUBLIC_PATHS = (
+# 完全公开的精确路径（只读端点 + 静态资源）
+# 注意：使用精确匹配避免前缀绕过（如 /api/history/clear 不能匹配 /api/history）
+PUBLIC_EXACT_PATHS = {
     '/',
-    '/static/',
     '/api/models',
     '/api/docs',
-    '/api/docs/',
     '/api/narration/tts/voices',
     '/api/nano-banana/models',
     '/api/templates',
     '/api/stats',
     '/api/history',
     '/api/tasks',
+}
+
+# 公开路径前缀（仅用于真正的子路径只读场景，需谨慎）
+PUBLIC_PREFIXES = (
+    '/static/',
+    '/api/docs/',
 )
 
-# 不需要鉴权的路径后缀
+# 公开路径的正则规则（GET 请求的只读动态路径）
+# 格式：(前缀, 允许的方法集合)
+PUBLIC_GET_PATTERNS = (
+    # /api/task/<id> GET 轮询放行（task_id 是 UUID 难以枚举）
+    ('/api/task/', frozenset({'GET'})),
+    # /api/download/<id> GET 下载放行
+    ('/api/download/', frozenset({'GET'})),
+    # /api/uploads/<filename> GET 上传文件预览
+    ('/api/uploads/', frozenset({'GET'})),
+    # /api/history/thumbnail/<task_id> GET 缩略图
+    ('/api/history/thumbnail/', frozenset({'GET'})),
+)
+
+# 不需要鉴权的路径后缀（静态资源）
 PUBLIC_SUFFIXES = ('.png', '.jpg', '.jpeg', '.css', '.js', '.ico', '.svg', '.webp')
 
 
-def is_public_path(path: str) -> bool:
-    """判断路径是否为公开路径（无需鉴权）"""
+def is_public_path(path: str, method: str = 'GET') -> bool:
+    """判断路径是否为公开路径（无需鉴权）
+
+    使用精确匹配 + 显式前缀，避免 startswith 误匹配子路径。
+    例如 /api/history 是公开的，但 /api/history/clear 不是。
+    """
     if not path:
         return True
-    for prefix in PUBLIC_PATHS:
-        if path == prefix or path.startswith(prefix):
+
+    # 精确匹配
+    if path in PUBLIC_EXACT_PATHS:
+        return True
+
+    # 静态前缀
+    for prefix in PUBLIC_PREFIXES:
+        if path.startswith(prefix):
             return True
+
+    # GET 请求的动态只读路径
+    if method in frozenset({'GET'}):
+        for prefix, allowed_methods in PUBLIC_GET_PATTERNS:
+            if method in allowed_methods and path.startswith(prefix):
+                return True
+
+    # 静态资源后缀
     for suffix in PUBLIC_SUFFIXES:
         if path.endswith(suffix):
             return True
+
     return False
 
 
 def extract_api_key() -> str:
-    """从请求中提取 API Key（支持 3 种方式）"""
+    """从请求中提取 API Key
+
+    仅支持 Header 方式，避免 query parameter 导致 URL 日志泄露。
+    """
     # 1. Authorization: Bearer xxx
     auth = request.headers.get('Authorization', '')
     if auth.startswith('Bearer '):
@@ -67,10 +106,6 @@ def extract_api_key() -> str:
     xkey = request.headers.get('X-API-Key', '')
     if xkey:
         return xkey.strip()
-    # 3. Query parameter
-    qkey = request.args.get('api_key', '')
-    if qkey:
-        return qkey.strip()
     return ''
 
 
@@ -110,13 +145,8 @@ def auth_middleware():
         return None
 
     path = request.path
-    if is_public_path(path):
+    if is_public_path(path, request.method):
         return None
-
-    # GET 请求对 /api/task/ 和 /api/download/ 放行（前端轮询需要）
-    if request.method == 'GET':
-        if path.startswith('/api/task/') or path.startswith('/api/download/'):
-            return None
 
     provided = extract_api_key()
     if not provided:

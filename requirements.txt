@@ -1,10 +1,12 @@
 Flask==3.0.0
 Flask-Cors==4.0.0
-google-genai>=1.0.0
+google-genai==1.0.0
 requests==2.31.0
 Pillow==10.1.0
 opencv-python==4.8.1.78
-gtts>=2.5.0
-imageio>=2.31.0
-imageio-ffmpeg>=0.4.9
-numpy>=1.24.0
+gtts==2.5.1
+imageio==2.31.0
+imageio-ffmpeg==0.4.9
+numpy==1.24.0
+gunicorn==21.2.0
+gevent==23.9.1

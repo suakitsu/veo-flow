@@ -20,6 +20,10 @@ from flask_cors import CORS
 
 app = Flask(__name__)
 
+# 文件上传大小限制（防 DoS）
+from config import MAX_UPLOAD_SIZE
+app.config['MAX_CONTENT_LENGTH'] = MAX_UPLOAD_SIZE
+
 # CORS 白名单（通过环境变量配置，逗号分隔；默认仅允许本地）
 _cors_origins = os.getenv('CORS_ORIGINS', 'http://localhost:5000,http://127.0.0.1:5000')
 CORS(app, origins=[o.strip() for o in _cors_origins.split(',') if o.strip()])
@@ -110,10 +114,15 @@ def get_thumbnail(task_id):
     - 视频：用 ffmpeg 抽取第 1 秒作为缩略图
     """
     import os
+    import re
     import subprocess
     import tempfile
     from flask import send_file, abort
     from imageio_ffmpeg import get_ffmpeg_exe
+
+    # 校验 task_id 格式（防路径穿越，仅允许字母数字下划线连字符）
+    if not re.match(r'^[A-Za-z0-9_-]+$', task_id):
+        abort(400)
 
     # 从 history 中查找记录
     history = hm._load()
@@ -133,6 +142,10 @@ def get_thumbnail(task_id):
     thumb_dir = os.path.join(tempfile.gettempdir(), 'veo_thumbs')
     os.makedirs(thumb_dir, exist_ok=True)
     thumb_path = os.path.join(thumb_dir, f'{task_id}_thumb.jpg')
+
+    # 校验 thumb_path 仍在 thumb_dir 内（防路径穿越）
+    if os.path.realpath(thumb_path) != thumb_path or not os.path.realpath(thumb_path).startswith(os.path.realpath(thumb_dir)):
+        abort(400)
 
     if not os.path.exists(thumb_path):
         try:

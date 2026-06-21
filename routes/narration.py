@@ -20,6 +20,7 @@ from config import (
 )
 from services.logger import get_logger
 from services.retry import call_with_retry
+from services.error_handler import safe_error_response
 
 log = get_logger(__name__)
 
@@ -354,7 +355,7 @@ def _create_slideshow(image_paths: list, audio_path: str, output_path: str,
 
 # ------------------- API 路由 -------------------
 
-@bp.route('/narration/auto', methods=['POST'])
+@bp.route('/api/narration/auto', methods=['POST'])
 def auto_narration():
     """
     Auto 模式第一步：topic -> Gemini生成文案 + 图片prompt列表
@@ -419,7 +420,7 @@ def auto_narration():
         })
 
 
-@bp.route('/narration/ai-image', methods=['POST'])
+@bp.route('/api/narration/ai-image', methods=['POST'])
 def ai_image():
     """
     用 Imagen 4 根据 prompt 生成图片，保存到 uploads，返回 filename + url
@@ -452,10 +453,10 @@ def ai_image():
         })
     except Exception as e:
         log.error("ai-image error: %s", e)
-        return jsonify({'error': str(e)}), 500
+        return safe_error_response(e, 500, 'AI image generation failed')
 
 
-@bp.route('/narration/tts/voices')
+@bp.route('/api/narration/tts/voices')
 def get_tts_voices():
     """获取 Gemini TTS 可用音色列表"""
     return jsonify({
@@ -465,7 +466,7 @@ def get_tts_voices():
     })
 
 
-@bp.route('/narration', methods=['POST'])
+@bp.route('/api/narration', methods=['POST'])
 def create_narration():
     """
     合成最终视频：接受 text + images(filenames) + voice + engine
@@ -508,11 +509,12 @@ def create_narration():
     if not ok:
         return jsonify({'error': 'TTS generation failed. Please install gtts: pip install gtts'}), 500
 
-    # 解析图片路径
+    # 解析图片路径（防路径穿越）
+    from services.file_security import safe_resolve_upload
     image_paths = []
     for fname in images:
-        p = UPLOAD_FOLDER / fname
-        if p.exists():
+        p = safe_resolve_upload(fname)
+        if p is not None:
             image_paths.append(str(p))
 
     if not image_paths:
@@ -549,7 +551,7 @@ def create_narration():
     })
 
 
-@bp.route('/narration/tts/multi-speaker', methods=['POST'])
+@bp.route('/api/narration/tts/multi-speaker', methods=['POST'])
 def tts_multi_speaker():
     """
     多说话人 Gemini TTS（对话/播客场景）

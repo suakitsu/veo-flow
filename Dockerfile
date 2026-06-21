@@ -11,11 +11,16 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 复制项目代码
-COPY . .
+# 创建非 root 用户（最小权限原则）
+RUN useradd -r -u 1000 -m -d /home/app -s /sbin/nologin app \
+    && mkdir -p /app/uploads /app/outputs /app/logs \
+    && chown -R app:app /app
 
-# 创建数据目录
-RUN mkdir -p /app/uploads /app/outputs /app/logs
+# 复制项目代码（.dockerignore 已排除密钥文件）
+COPY --chown=app:app . .
+
+# 切换到非 root 用户
+USER app
 
 # 暴露端口
 EXPOSE 5000
@@ -29,5 +34,6 @@ ENV PORT=5000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:5000/api/models')" || exit 1
 
-# 启动命令
-CMD ["python", "app.py"]
+# 生产环境使用 gunicorn + gevent（支持 SSE 长连接并发）
+# gevent worker 支持 SSE 流式响应；timeout=0 避免长任务被杀
+CMD ["gunicorn", "-k", "gevent", "-w", "4", "--timeout", "120", "-b", "0.0.0.0:5000", "app:app"]

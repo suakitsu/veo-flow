@@ -3,12 +3,14 @@
 集中管理任务状态、用户锁、后台线程调度
 支持任务状态持久化到 JSON 文件，重启后恢复
 支持可配置的并发限制（每用户最大并行任务数）
+支持任务 TTL 自动清理（避免内存无限增长）
 """
 
 import os
 import uuid
 import json
 import threading
+import time
 from datetime import datetime
 from pathlib import Path
 
@@ -25,6 +27,14 @@ MAX_TASKS_PER_USER = int(os.getenv('MAX_TASKS_PER_USER', '1'))
 # 全局最大并行任务数（默认 0 = 不限制）
 MAX_GLOBAL_TASKS = int(os.getenv('MAX_GLOBAL_TASKS', '0'))
 
+# 任务 TTL 清理配置
+# 已完成任务保留时长（秒），默认 7 天
+TASK_TTL_SECONDS = int(os.getenv('TASK_TTL_SECONDS', str(7 * 24 * 3600)))
+# _tasks 字典最大条目数（超出时淘汰最旧的），默认 1000
+MAX_TASKS_IN_MEMORY = int(os.getenv('MAX_TASKS_IN_MEMORY', '1000'))
+# 清理检查间隔（秒），默认 1 小时
+TASK_CLEANUP_INTERVAL = int(os.getenv('TASK_CLEANUP_INTERVAL', str(3600)))
+
 _lock = threading.Lock()
 
 # 任务状态存储
@@ -32,6 +42,9 @@ _tasks: dict = {}
 
 # 用户任务锁：ip -> set of task_ids
 _user_locks: dict = {}
+
+# 上次清理时间戳
+_last_cleanup = 0.0
 
 
 # 持久化
@@ -76,11 +89,66 @@ def _load_tasks():
 _load_tasks()
 
 
+# TTL 清理
+
+def _cleanup_expired_tasks():
+    """清理过期的已完成任务（防内存无限增长）
+
+    策略：
+    1. 删除超过 TASK_TTL_SECONDS 的已完成/已失败/已中断任务
+    2. 如果清理后仍超过 MAX_TASKS_IN_MEMORY，按创建时间淘汰最旧的
+    """
+    global _last_cleanup
+    now = time.time()
+    # 限频：每 TASK_CLEANUP_INTERVAL 秒最多清理一次
+    if now - _last_cleanup < TASK_CLEANUP_INTERVAL:
+        return
+    _last_cleanup = now
+
+    with _lock:
+        expired_ids = []
+        for tid, task in list(_tasks.items()):
+            status = task.get('status', '')
+            # 仅清理终态任务
+            if status not in ('completed', 'error', 'interrupted'):
+                continue
+            created = task.get('created_at', '')
+            if not created:
+                # 无创建时间的视为过期
+                expired_ids.append(tid)
+                continue
+            try:
+                ct = datetime.fromisoformat(created).timestamp()
+                if now - ct > TASK_TTL_SECONDS:
+                    expired_ids.append(tid)
+            except (ValueError, OSError):
+                expired_ids.append(tid)
+
+        for tid in expired_ids:
+            _tasks.pop(tid, None)
+
+        # 如果仍超过上限，按创建时间淘汰最旧的终态任务
+        if len(_tasks) > MAX_TASKS_IN_MEMORY:
+            terminal = [(tid, t) for tid, t in _tasks.items()
+                       if t.get('status') in ('completed', 'error', 'interrupted')]
+            terminal.sort(key=lambda x: x[1].get('created_at', ''))
+            excess = len(_tasks) - MAX_TASKS_IN_MEMORY
+            for tid, _ in terminal[:excess]:
+                _tasks.pop(tid, None)
+
+        if expired_ids:
+            log.info("Cleanup: removed %d expired tasks", len(expired_ids))
+            _save_tasks()
+
+
 # 任务 CRUD
 
 def create_task(mode: str, prompt: str, model: str, ratio: str,
                 output_path: str, **extra) -> dict:
     """创建一个新任务并返回任务对象"""
+    # 创建前触发清理（限频，不会每次都执行）
+    _cleanup_expired_tasks()
+
     task_id = str(uuid.uuid4())
     task = {
         'id': task_id,

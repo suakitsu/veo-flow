@@ -39,11 +39,14 @@
 | 模型 | 价格 | 说明 |
 |------|------|------|
 | Veo 3.1 | $0.40/秒 | 最新模型，质量最好 |
-| Veo 3.1 Fast | $0.20/秒 | 速度快，性价比高 ⭐ |
+| Veo 3.1 Fast | $0.15/秒 | 速度快，性价比高 ⭐ |
+| Veo 3.1 Lite | $0.10/秒 | 经济模式 |
 | Veo 3 | $0.40/秒 | 稳定版 |
+| Veo 3 Fast | $0.20/秒 | Veo 3 快速版 |
 | Veo 2 | $0.50/秒 | 上一代，兼容性更好 |
-| Imagen 3 | ~$0.04/张 | 高质量图像 |
-| Imagen 3 Fast | ~$0.02/张 | 快速生成 |
+| Imagen 4 Ultra | ~$0.06/张 | 最高质量 |
+| Imagen 4 | ~$0.04/张 | 高质量图像 |
+| Imagen 4 Fast | ~$0.02/张 | 快速生成 |
 
 **计费方式：** 按秒计费，不是按调用次数。8秒视频 = $3.20 (Veo 3.1)
 
@@ -53,7 +56,7 @@
 
 ### 环境要求
 
-- Python 3.8+
+- Python 3.10+
 - FFmpeg（长视频拼接需要）
 - GCP 服务账号，开启 Vertex AI API
 
@@ -64,12 +67,11 @@
 pip install -r requirements.txt
 
 # 2. 配置凭证
-#    方式 A：API Key 模式 (推荐，适用于“小米米莫”等中转平台)
+#    方式 A：API Key 模式 (适用于"小米米莫"等中转平台)
 #       编辑 config.json：填入 "api_key"、"api_base_url" 和 "project_id" 即可。
-#    方式 B：Vertex AI 模式 (官方标准)
+#    方式 B：Vertex AI 模式 (官方标准，推荐)
 #       将 GCP 服务账号密钥保存为 vertex.json 放入根目录，并在 config.json 中填入 "project_id"。
 
-```bash
 # 3. 启动
 python app.py
 # 或双击 start.bat（Windows）
@@ -77,32 +79,84 @@ python app.py
 # 4. 打开 http://localhost:5000
 ```
 
+### Docker 部署（生产环境推荐）
+
+```bash
+# 1. 准备凭证文件
+cp config.example.json config.json   # 编辑填入 project_id
+cp vertex.example.json vertex.json   # 编辑填入真实服务号密钥
+cp .env.example .env                 # 编辑按需配置
+
+# 2. 构建并启动
+docker compose up -d --build
+
+# 3. 查看日志
+docker compose logs -f
+```
+
+生产环境使用 gunicorn + gevent（支持 SSE 并发），非 root 用户运行，端口仅绑定 127.0.0.1（需反向代理）。
+
+### API 鉴权
+
+设置环境变量 `API_KEY` 后，所有写操作端点需要鉴权：
+
+```bash
+# 请求头方式（推荐）
+curl -H "X-API-Key: your-secret-key" http://localhost:5000/api/generate
+# 或
+curl -H "Authorization: Bearer your-secret-key" http://localhost:5000/api/generate
+```
+
+只读端点（模型列表、文档、任务查询、历史查看）无需鉴权。
+
 ## 项目结构
 
 ```
-googleVideo/
+veo-flow/
 ├── app.py                 # 入口
 ├── config.py              # 配置
 ├── start.bat              # Windows启动脚本
+├── Dockerfile             # Docker 镜像构建（gunicorn + gevent）
+├── docker-compose.yml     # Docker Compose 编排
 │
 ├── generators/            # 核心生成逻辑
-│   ├── veo.py            # Veo视频生成
+│   ├── veo.py            # Veo视频生成（短/长/延长/插值）
 │   ├── imagen.py         # Imagen图像生成
-│   └── client.py         # 统一 GenAI 客户端管理
+│   ├── nano_banana.py    # Nano Banana 图像生成
+│   └── client.py         # 统一 GenAI 客户端管理（Vertex AI / API Key 双模式）
 │
 ├── routes/                # Flask蓝图
 │   ├── generate.py       # 短/长/图/批量分镜接口
 │   ├── narration.py      # 配音与自动出片工作流
 │   ├── gemini.py         # AI助手接口
-│   ├── tasks.py          # 任务状态和下载
-│   └── proxy.py          # 代理控制
+│   ├── nano_banana.py    # Nano Banana 路由
+│   ├── tasks.py          # 任务状态、SSE 流、下载
+│   ├── proxy.py          # 代理控制
+│   └── docs.py           # OpenAPI 文档服务
 │
 ├── services/              # 服务层
-│   ├── task_manager.py   # 任务状态、用户锁锁
-│   └── history_manager.py# 线程安全记录与统计服务
+│   ├── task_manager.py   # 任务状态、用户锁、TTL 清理
+│   ├── history_manager.py# 线程安全记录与统计服务
+│   ├── auth.py           # API Key 鉴权中间件
+│   ├── retry.py          # 指数退避重试机制
+│   ├── request_utils.py  # 真实 IP 获取（防 XFF 伪造）
+│   ├── file_security.py  # 文件上传安全（路径穿越防护、类型校验）
+│   ├── error_handler.py  # 统一错误响应（不泄露内部异常）
+│   ├── cleanup.py        # 过期文件清理
+│   └── logger.py         # 结构化日志
 │
 ├── templates/
 │   └── index.html        # 网页界面
+│
+├── tests/                # 测试套件
+│   ├── test_app.py       # 应用入口测试
+│   ├── test_auth.py      # 鉴权中间件测试
+│   ├── test_config.py    # 配置测试
+│   ├── test_task_manager.py # 任务管理测试
+│   └── test_history_manager.py # 历史记录测试
+│
+├── docs/
+│   └── openapi.yaml      # OpenAPI 规范
 │
 ├── uploads/               # 上传文件
 └── outputs/               # 生成结果

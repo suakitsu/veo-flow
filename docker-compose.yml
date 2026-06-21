@@ -1,21 +1,20 @@
-version: '3.8'
-
 services:
   veo-flow:
     build: .
     container_name: veo-flow
     ports:
-      - "${PORT:-5000}:5000"
+      # 仅绑定本地，需反向代理（Nginx/Caddy）才能公网访问
+      - "127.0.0.1:${PORT:-5000}:5000"
     volumes:
       # 持久化数据
       - ./uploads:/app/uploads
       - ./outputs:/app/outputs
       - ./logs:/app/logs
-      - ./tasks.json:/app/tasks.json
-      - ./history.json:/app/history.json
       # 凭证文件（只读挂载）
       - ./vertex.json:/app/vertex.json:ro
       - ./config.json:/app/config.json:ro
+      # tasks.json/history.json 用命名 volume 避免宿主文件不存在时被创建为目录
+      - veo_data:/app/data
     environment:
       - FLASK_DEBUG=${FLASK_DEBUG:-false}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
@@ -23,6 +22,21 @@ services:
       - OUTPUT_TTL_HOURS=${OUTPUT_TTL_HOURS:-168}
       - UPLOAD_TTL_HOURS=${UPLOAD_TTL_HOURS:-24}
       - CLEANUP_INTERVAL_HOURS=${CLEANUP_INTERVAL_HOURS:-1}
+      - API_KEY=${API_KEY:-}
+      - TRUSTED_PROXIES=${TRUSTED_PROXIES:-}
+      - MAX_TASKS_PER_USER=${MAX_TASKS_PER_USER:-1}
+      - MAX_GLOBAL_TASKS=${MAX_GLOBAL_TASKS:-0}
+      - GCP_PROJECT_ID=${GCP_PROJECT_ID:-}
+      - HTTP_PROXY=${HTTP_PROXY:-}
+      - HTTPS_PROXY=${HTTPS_PROXY:-}
+    # 安全加固
+    read_only: false
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: ${MEM_LIMIT:-2g}
+    cpus: ${CPUS:-2}
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/api/models')"]
@@ -30,3 +44,6 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
+
+volumes:
+  veo_data:

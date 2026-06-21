@@ -1537,14 +1537,107 @@ if (savedTheme) document.body.dataset.theme = savedTheme;
 // ─────────────────────────────────────────────────────────────────────────────
 // State
 // ─────────────────────────────────────────────────────────────────────────────
-const API = 'http://127.0.0.1:5000';
-// API Key 鉴权（从 localStorage 读取，用户可在设置中配置）
-const API_KEY = localStorage.getItem('veo_api_key') || '';
-function authHeaders() {
-    return API_KEY ? { 'X-API-Key': API_KEY } : {};
+const API = window.location.origin || 'http://127.0.0.1:5000';
+// API Key 鉴权（使用 sessionStorage，关闭标签即失效，避免 XSS 持久窃取）
+// 主题等非敏感配置仍用 localStorage
+const API_KEY = sessionStorage.getItem('veo_api_key') || '';
+function authHeaders(extra = {}) {
+    return API_KEY ? { 'X-API-Key': API_KEY, ...extra } : { ...extra };
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Security & fetch utilities
+// ─────────────────────────────────────────────────────────────────────────────
+// HTML 转义，防止 XSS（所有服务端返回文本插入 DOM 前必须经过此函数）
+function escapeHtml(s) {
+    if (s == null) return '';
+    return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+// 转义后保留换行（用于显示多行文本）
+function escapeHtmlBr(s) {
+    return escapeHtml(s).replace(/\n/g, '<br>');
+}
+// 转义用于 HTML 属性内的字符串
+function escapeAttr(s) {
+    return escapeHtml(s);
+}
+
+// 统一 fetch 封装：检查 r.ok、解析 JSON、处理非 JSON 响应
+async function apiFetch(url, options = {}) {
+    const opts = { ...options };
+    // 自动注入鉴权头（不覆盖已显式设置的）
+    if (!opts.headers) opts.headers = {};
+    opts.headers = { ...authHeaders(), ...(opts.headers || {}) };
+    const r = await fetch(url, opts);
+    if (!r.ok) {
+        // 尝试解析 JSON 错误，否则用状态码
+        let msg = `HTTP ${r.status}`;
+        try {
+            const d = await r.json();
+            if (d.error) msg = d.error;
+        } catch (_) { /* 非 JSON 响应，用默认 msg */ }
+        throw new Error(msg);
+    }
+    const ct = r.headers.get('content-type') || '';
+    if (!ct.includes('application/json')) {
+        throw new Error('Unexpected response type: ' + ct);
+    }
+    return r.json();
+}
+
+// 基于 fetch 的 SSE 流式读取（支持自定义 header，避免 query 参数泄露 API Key）
+async function fetchSSE(url, onMessage, onError, signal) {
+    const fetchOpts = {
+        method: 'GET',
+        headers: { ...authHeaders(), 'Accept': 'text/event-stream' },
+    };
+    if (signal) fetchOpts.signal = signal;
+    const r = await fetch(url, fetchOpts);
+    if (!r.ok || !r.body) {
+        throw new Error(`SSE connect failed: HTTP ${r.status}`);
+    }
+    const reader = r.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    try {
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+            // SSE 事件以双换行分隔
+            let idx;
+            while ((idx = buffer.indexOf('\n\n')) >= 0) {
+                const block = buffer.slice(0, idx);
+                buffer = buffer.slice(idx + 2);
+                // 解析 data: 行
+                const lines = block.split('\n');
+                for (const line of lines) {
+                    if (line.startsWith('data:')) {
+                        const data = line.slice(5).trim();
+                        if (data) {
+                            try { onMessage(JSON.parse(data)); }
+                            catch (e) { /* 忽略非 JSON 数据行 */ }
+                        }
+                    }
+                }
+            }
+        }
+    } catch (e) {
+        // AbortError 是主动取消，不算错误
+        if (e.name === 'AbortError') return;
+        if (onError) onError(e);
+        else throw e;
+    }
+}
+
 let dur = 8, extendDur = 8, mode = 'short', taskId = null, pollTimer = null, aiStyle = 'cinematic';
 let extendFile = null, extendFileType = null;
+let sseAbort = null; // SSE 流的取消控制器
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tab switching
@@ -1678,6 +1771,8 @@ function onExtendUpload(e) {
     prev.classList.add('show');
     if (extendFileType === 'video') {
         vid.style.display = 'block'; img.style.display = 'none';
+        // 释放旧的 ObjectURL 防内存泄漏
+        if (vid.src && vid.src.startsWith('blob:')) URL.revokeObjectURL(vid.src);
         vid.src = URL.createObjectURL(f);
     } else {
         vid.style.display = 'none'; img.style.display = 'block';
@@ -1742,14 +1837,13 @@ async function analyzeImage() {
         fd.append('target', mode === 'image' ? 'image' : 'video');
         fd.append('instruction', document.getElementById('ai-instruction').value);
         fd.append('gemini_model', getGeminiModel());
-        const r = await fetch(`${API}/api/analyze-image`, { method: 'POST', body: fd });
-        const d = await r.json();
-        if (d.error) throw new Error(d.error);
+        const d = await apiFetch(`${API}/api/analyze-image`, { method: 'POST', body: fd });
         let html = '';
-        if (d.description) html += `<div class="lbl">Description</div><div class="val">${d.description}</div>`;
-        if (d.prompt) html += `<div class="lbl">Generated Prompt</div><div class="val">${d.prompt}</div>`;
-        if (d.negative_prompt) html += `<div class="lbl">Negative</div><div class="val">${d.negative_prompt}</div>`;
-        html += `<button class="ai-use-btn" onclick="useAiResult('${encodeURIComponent(d.prompt||'')}','${encodeURIComponent(d.negative_prompt||'')}')">Use This Prompt</button>`;
+        if (d.description) html += `<div class="lbl">Description</div><div class="val">${escapeHtml(d.description)}</div>`;
+        if (d.prompt) html += `<div class="lbl">Generated Prompt</div><div class="val">${escapeHtml(d.prompt)}</div>`;
+        if (d.negative_prompt) html += `<div class="lbl">Negative</div><div class="val">${escapeHtml(d.negative_prompt)}</div>`;
+        // 用 data-* 属性 + 事件委托替代 onclick 字符串拼接（防 XSS）
+        html += `<button class="ai-use-btn" data-action="use-ai" data-prompt="${escapeAttr(d.prompt||'')}" data-neg="${escapeAttr(d.negative_prompt||'')}">Use This Prompt</button>`;
         res.innerHTML = html; res.classList.add('show');
     } catch (e) { alert('Error: ' + e.message); }
     btn.disabled = false; btn.innerHTML = '<span>🔍</span> Analyze Image';
@@ -1765,27 +1859,47 @@ async function refinePrompt() {
     const res = document.getElementById('ai-result');
     res.classList.remove('show');
     try {
-        const r = await fetch(`${API}/api/refine-prompt`, {
+        const d = await apiFetch(`${API}/api/refine-prompt`, {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ prompt, target: mode === 'image' ? 'image' : 'video', style: aiStyle, gemini_model: getGeminiModel() })
         });
-        const d = await r.json();
-        if (d.error) throw new Error(d.error);
         let html = '';
-        if (d.changes) html += `<div class="lbl">Changes</div><div class="val">${d.changes}</div>`;
-        if (d.prompt) html += `<div class="lbl">Refined Prompt</div><div class="val">${d.prompt}</div>`;
-        if (d.negative_prompt) html += `<div class="lbl">Negative</div><div class="val">${d.negative_prompt}</div>`;
-        html += `<button class="ai-use-btn" onclick="useAiResult('${encodeURIComponent(d.prompt||'')}','${encodeURIComponent(d.negative_prompt||'')}')">Use This Prompt</button>`;
+        if (d.changes) html += `<div class="lbl">Changes</div><div class="val">${escapeHtml(d.changes)}</div>`;
+        if (d.prompt) html += `<div class="lbl">Refined Prompt</div><div class="val">${escapeHtml(d.prompt)}</div>`;
+        if (d.negative_prompt) html += `<div class="lbl">Negative</div><div class="val">${escapeHtml(d.negative_prompt)}</div>`;
+        html += `<button class="ai-use-btn" data-action="use-ai" data-prompt="${escapeAttr(d.prompt||'')}" data-neg="${escapeAttr(d.negative_prompt||'')}">Use This Prompt</button>`;
         res.innerHTML = html; res.classList.add('show');
     } catch (e) { alert('Error: ' + e.message); }
     btn.disabled = false; btn.innerHTML = '<span>✨</span> Refine Prompt';
 }
 
+// 事件委托：处理 AI 结果区按钮点击（替代 onclick 字符串拼接，防 XSS）
+document.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    const action = btn.dataset.action;
+    if (action === 'use-ai') {
+        useAiResult(btn.dataset.prompt || '', btn.dataset.neg || '');
+    } else if (action === 'use-chat-prompt') {
+        useChatPrompt(btn.dataset.prompt || '');
+    } else if (action === 'use-chat-full') {
+        useChatFull(btn.dataset.text || '');
+    } else if (action === 'use-template') {
+        useTemplate(btn.dataset.prompt || '');
+    } else if (action === 'remove-shot') {
+        const id = parseFloat(btn.dataset.id);
+        if (!isNaN(id)) removeShot(id);
+    } else if (action === 'open-thumb') {
+        const url = btn.dataset.url;
+        if (url) window.open(url, '_blank');
+    }
+});
+
 function useAiResult(prompt, neg) {
     const promptEl = document.getElementById(mode + '-prompt');
     const negEl = document.getElementById(mode + '-neg');
-    if (promptEl) promptEl.value = decodeURIComponent(prompt);
-    if (neg && negEl) negEl.value = decodeURIComponent(neg);
+    if (promptEl) promptEl.value = prompt;
+    if (neg && negEl) negEl.value = neg;
     toggleAiPanel();
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -1798,34 +1912,31 @@ async function chatSend() {
     reply.style.display = 'block';
     reply.innerHTML = '<span class="spinner"></span> Thinking...';
     try {
-        const r = await fetch(`${API}/api/chat`, {
+        const d = await apiFetch(`${API}/api/chat`, {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ message: msg, context: `Mode:${mode}, Style:${aiStyle}`, gemini_model: getGeminiModel() })
         });
-        const d = await r.json();
-        if (d.error) throw new Error(d.error);
         const text = d.reply || 'No response';
         const promptMatch = text.match(/(?:prompt|提示词)[:\s]*([^\n]+)/i);
         const extracted = promptMatch ? promptMatch[1].trim() : '';
-        let html = text.replace(/\n/g, '<br>');
+        let html = escapeHtmlBr(text);
         html += '<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">';
-        if (extracted) html += `<button class="ai-use-btn" onclick="useChatPrompt('${encodeURIComponent(extracted)}')">Use This Prompt</button>`;
-        html += `<button class="ai-use-btn" onclick="useChatFull('${encodeURIComponent(text)}')" style="background:var(--text2);margin-top:6px">Use Full Reply</button>`;
+        if (extracted) html += `<button class="ai-use-btn" data-action="use-chat-prompt" data-prompt="${escapeAttr(extracted)}">Use This Prompt</button>`;
+        html += `<button class="ai-use-btn" data-action="use-chat-full" data-text="${escapeAttr(text)}" style="background:var(--text2);margin-top:6px">Use Full Reply</button>`;
         html += '</div>';
         reply.innerHTML = html;
-    } catch (e) { reply.innerHTML = 'Error: ' + e.message; }
+    } catch (e) { reply.textContent = 'Error: ' + e.message; }
 }
 
 function useChatPrompt(p) {
     const el = document.getElementById(mode + '-prompt');
-    if (el) el.value = decodeURIComponent(p);
+    if (el) el.value = p;
     toggleAiPanel();
 }
 
 function useChatFull(t) {
-    const clean = decodeURIComponent(t).replace(/<br>/g, '\n').replace(/<[^>]+>/g, '');
     const el = document.getElementById(mode + '-prompt');
-    if (el) el.value = clean.substring(0, 500);
+    if (el) el.value = t.substring(0, 500);
     toggleAiPanel();
 }
 
@@ -1964,10 +2075,12 @@ async function generate() {
         taskId = d.task_id;
         document.getElementById('prog-text').textContent = 'Task created...';
         document.getElementById('prog-bar').style.width = '10%';
-        // 优先使用 SSE 实时推送，不支持时回退到轮询
-        if (window.EventSource) {
+        // 优先使用 SSE 实时推送（基于 fetch，支持 header 鉴权），不支持时回退到轮询
+        if (window.fetch && window.ReadableStream) {
             startSSE(taskId);
         } else {
+            // 启动轮询前先清理旧定时器（防泄漏）
+            if (pollTimer) clearInterval(pollTimer);
             pollTimer = setInterval(checkStatus, 2000);
         }
     } catch (e) {
@@ -1979,74 +2092,28 @@ async function generate() {
     }
 }
 
-// SSE 实时进度推送（比轮询更高效，服务端有变化才推送）
-let eventSource = null;
+// SSE 实时进度推送（基于 fetch streaming，支持自定义 header 避免 query 参数泄露 API Key）
+let sseController = null;
 function startSSE(id) {
-    if (eventSource) eventSource.close();
-    const url = `${API}/api/task/${id}/stream${API_KEY ? '?api_key=' + encodeURIComponent(API_KEY) : ''}`;
-    eventSource = new EventSource(url);
-    eventSource.onmessage = (e) => {
-        try {
-            const d = JSON.parse(e.data);
-            if (d.error) {
-                eventSource.close(); eventSource = null;
-                isSubmitting = false;
-                const btn = document.getElementById('gen-btn'); btn.disabled = false;
-                btn.textContent = lang === 'zh' ? '生成' : 'Generate';
-                document.getElementById('progress').classList.remove('show');
-                alert('Failed: ' + d.error);
-                return;
-            }
-            document.getElementById('prog-text').textContent = d.message || '';
-            document.getElementById('prog-bar').style.width = (d.progress || 0) + '%';
-            if (d.status === 'completed') {
-                eventSource.close(); eventSource = null;
-                isSubmitting = false;
-                const btn = document.getElementById('gen-btn'); btn.disabled = false;
-                btn.textContent = lang === 'zh' ? '生成' : 'Generate';
-                document.getElementById('progress').classList.remove('show');
-                document.getElementById('result').classList.add('show');
-                const vid = document.getElementById('result-video');
-                const img = document.getElementById('result-image');
-                const dl = document.getElementById('dl-btn');
-                if (mode === 'image') {
-                    vid.style.display = 'none'; img.style.display = 'block';
-                    img.src = d.output_url; dl.href = d.output_url;
-                    dl.textContent = lang === 'zh' ? '下载图片' : 'Download Image';
-                } else {
-                    img.style.display = 'none'; vid.style.display = 'block';
-                    vid.src = d.output_url; dl.href = d.output_url;
-                    dl.textContent = lang === 'zh' ? '下载视频' : 'Download Video';
-                }
-            } else if (d.status === 'error' || d.status === 'interrupted') {
-                eventSource.close(); eventSource = null;
-                isSubmitting = false;
-                const btn = document.getElementById('gen-btn'); btn.disabled = false;
-                btn.textContent = lang === 'zh' ? '生成' : 'Generate';
-                document.getElementById('progress').classList.remove('show');
-                alert('Failed: ' + d.message);
-            }
-        } catch (err) { console.error('SSE parse error:', err); }
-    };
-    eventSource.onerror = () => {
-        // SSE 连接断开，回退到轮询
-        if (eventSource) { eventSource.close(); eventSource = null; }
-        if (taskId && isSubmitting) {
-            console.warn('SSE disconnected, falling back to polling');
-            pollTimer = setInterval(checkStatus, 2000);
+    // 取消旧的 SSE 流（防泄漏）
+    stopSSE();
+    sseController = new AbortController();
+    const url = `${API}/api/task/${id}/stream`;
+    fetchSSE(url, (d) => {
+        if (d.error) {
+            stopSSE();
+            isSubmitting = false;
+            const btn = document.getElementById('gen-btn'); btn.disabled = false;
+            btn.textContent = lang === 'zh' ? '生成' : 'Generate';
+            document.getElementById('progress').classList.remove('show');
+            alert('Failed: ' + d.error);
+            return;
         }
-    };
-}
-
-async function checkStatus() {
-    if (!taskId) return;
-    try {
-        const r = await fetch(`${API}/api/task/${taskId}`);
-        const d = await r.json();
         document.getElementById('prog-text').textContent = d.message || '';
         document.getElementById('prog-bar').style.width = (d.progress || 0) + '%';
         if (d.status === 'completed') {
-            clearInterval(pollTimer); isSubmitting = false;
+            stopSSE();
+            isSubmitting = false;
             const btn = document.getElementById('gen-btn'); btn.disabled = false;
             btn.textContent = lang === 'zh' ? '生成' : 'Generate';
             document.getElementById('progress').classList.remove('show');
@@ -2063,14 +2130,87 @@ async function checkStatus() {
                 vid.src = d.output_url; dl.href = d.output_url;
                 dl.textContent = lang === 'zh' ? '下载视频' : 'Download Video';
             }
-        } else if (d.status === 'error') {
-            clearInterval(pollTimer); isSubmitting = false;
+        } else if (d.status === 'error' || d.status === 'interrupted') {
+            stopSSE();
+            isSubmitting = false;
             const btn = document.getElementById('gen-btn'); btn.disabled = false;
             btn.textContent = lang === 'zh' ? '生成' : 'Generate';
             document.getElementById('progress').classList.remove('show');
             alert('Failed: ' + d.message);
         }
-    } catch (e) { console.error(e); }
+    }, (err) => {
+        // SSE 连接断开，回退到轮询
+        console.warn('SSE disconnected, falling back to polling:', err.message);
+        if (taskId && isSubmitting) {
+            if (pollTimer) clearInterval(pollTimer);
+            pollTimer = setInterval(checkStatus, 2000);
+        }
+    }, sseController ? sseController.signal : undefined).catch(err => {
+        // fetchSSE 抛出（如 HTTP 错误），回退到轮询
+        console.warn('SSE init failed, falling back to polling:', err.message);
+        if (taskId && isSubmitting) {
+            if (pollTimer) clearInterval(pollTimer);
+            pollTimer = setInterval(checkStatus, 2000);
+        }
+    });
+}
+
+function stopSSE() {
+    if (sseController) {
+        sseController.abort();
+        sseController = null;
+    }
+}
+
+async function checkStatus() {
+    if (!taskId) return;
+    try {
+        const r = await fetch(`${API}/api/task/${taskId}`, { headers: authHeaders() });
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        const d = await r.json();
+        document.getElementById('prog-text').textContent = d.message || '';
+        document.getElementById('prog-bar').style.width = (d.progress || 0) + '%';
+        if (d.status === 'completed') {
+            if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+            isSubmitting = false;
+            const btn = document.getElementById('gen-btn'); btn.disabled = false;
+            btn.textContent = lang === 'zh' ? '生成' : 'Generate';
+            document.getElementById('progress').classList.remove('show');
+            document.getElementById('result').classList.add('show');
+            const vid = document.getElementById('result-video');
+            const img = document.getElementById('result-image');
+            const dl = document.getElementById('dl-btn');
+            if (mode === 'image') {
+                vid.style.display = 'none'; img.style.display = 'block';
+                img.src = d.output_url; dl.href = d.output_url;
+                dl.textContent = lang === 'zh' ? '下载图片' : 'Download Image';
+            } else {
+                img.style.display = 'none'; vid.style.display = 'block';
+                vid.src = d.output_url; dl.href = d.output_url;
+                dl.textContent = lang === 'zh' ? '下载视频' : 'Download Video';
+            }
+        } else if (d.status === 'error' || d.status === 'interrupted') {
+            if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+            isSubmitting = false;
+            const btn = document.getElementById('gen-btn'); btn.disabled = false;
+            btn.textContent = lang === 'zh' ? '生成' : 'Generate';
+            document.getElementById('progress').classList.remove('show');
+            alert('Failed: ' + d.message);
+        }
+    } catch (e) {
+        console.error('checkStatus error:', e);
+        // 网络错误时不停止轮询，但限制重试（避免无限重试）
+        // 如果连续失败太多次，停止轮询并提示
+        if (!window._pollFailCount) window._pollFailCount = 0;
+        window._pollFailCount++;
+        if (window._pollFailCount > 10) {
+            if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+            isSubmitting = false;
+            const btn = document.getElementById('gen-btn'); btn.disabled = false;
+            btn.textContent = lang === 'zh' ? '生成' : 'Generate';
+            alert('Lost connection to server. Please check network and retry.');
+        }
+    }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2135,7 +2275,7 @@ async function autoNarrate() {
         progBar.style.width = '10%';
 
         const textRes = await fetch(`${API}/api/narration/auto`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders() },
             body: JSON.stringify({ topic, image_count: imgCount, duration: durSec })
         });
         const textData = await textRes.json();
@@ -2149,7 +2289,7 @@ async function autoNarrate() {
             progText.textContent = `Step 2/3: Generating image ${i+1}/${prompts.length}...`;
             progBar.style.width = (30 + (i+1)/prompts.length * 30) + '%';
             const imgRes = await fetch(`${API}/api/narration/ai-image`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders() },
                 body: JSON.stringify({ prompt: prompts[i] })
             });
             const imgData = await imgRes.json();
@@ -2223,7 +2363,7 @@ async function manualNarrate() {
         for (let i = 0; i < narrImages.length; i++) {
             const fd = new FormData();
             fd.append('image', narrImages[i]);
-            const res = await fetch(`${API}/api/upload`, { method: 'POST', body: fd });
+            const res = await fetch(`${API}/api/upload`, { method: 'POST', body: fd, headers: authHeaders() });
             const data = await res.json();
             if (data.error) throw new Error(data.error);
             uploaded.push(data.filename);
@@ -2263,29 +2403,28 @@ async function loadTemplates() {
     const list = document.getElementById('templates-list');
     list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2)"><span class="spinner"></span> Loading templates...</div>';
     try {
-        const r = await fetch((API || '') + '/api/templates');
-        const d = await r.json();
+        const d = await apiFetch((API || '') + '/api/templates');
         if (!d.categories || d.categories.length === 0) {
             list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2)">No templates found in templates.json</div>';
             return;
         }
         list.innerHTML = d.categories.map(cat => `
             <div style="margin-bottom:24px">
-                <div class="tpl-cat-title">${cat.icon || ''} ${cat.name}</div>
+                <div class="tpl-cat-title">${escapeHtml(cat.icon || '')} ${escapeHtml(cat.name)}</div>
                 <div class="tpl-grid">
                     ${(cat.templates || []).map(t => `
-                        <div class="tpl-card" onclick="useTemplate(${JSON.stringify(t.prompt).replace(/"/g, '&quot;')})">
-                            <h4>${t.name}</h4>
-                            <p>${t.prompt.substring(0, 70)}${t.prompt.length > 70 ? '…' : ''}</p>
-                            <div class="tpl-meta">${t.model || 'veo3.1'} · ${t.duration || 8}s · ${t.ratio || '16:9'}</div>
+                        <div class="tpl-card" data-action="use-template" data-prompt="${escapeAttr(t.prompt || '')}">
+                            <h4>${escapeHtml(t.name)}</h4>
+                            <p>${escapeHtml((t.prompt || '').substring(0, 70))}${(t.prompt||'').length > 70 ? '…' : ''}</p>
+                            <div class="tpl-meta">${escapeHtml(t.model || 'veo3.1')} · ${escapeHtml(String(t.duration || 8))}s · ${escapeHtml(t.ratio || '16:9')}</div>
                         </div>
                     `).join('')}
                 </div>
             </div>
         `).join('');
-    } catch (e) { 
-        list.innerHTML = `<div style="text-align:center;padding:40px;color:var(--error)">Error loading templates: ${e.message}</div>`;
-        console.error(e); 
+    } catch (e) {
+        list.innerHTML = `<div style="text-align:center;padding:40px;color:var(--error)">Error loading templates: ${escapeHtml(e.message)}</div>`;
+        console.error(e);
     }
 }
 
@@ -2321,7 +2460,7 @@ function renderShots() {
     container.innerHTML = shots.map((s, i) => `
         <div class="shot-row">
             <span class="shot-num">${i + 1}</span>
-            <input type="text" placeholder="Shot prompt..." value="${s.prompt.replace(/"/g,'&quot;')}"
+            <input type="text" placeholder="Shot prompt..." value="${escapeAttr(s.prompt)}"
                 oninput="updateShot(${s.id}, 'prompt', this.value)">
             <select onchange="updateShot(${s.id}, 'model', this.value)" style="width:110px">
                 <option value="veo3.1" ${s.model==='veo3.1'?'selected':''}>veo3.1</option>
@@ -2333,9 +2472,9 @@ function renderShots() {
                 <option value="16:9" ${s.ratio==='16:9'?'selected':''}>16:9</option>
                 <option value="9:16" ${s.ratio==='9:16'?'selected':''}>9:16</option>
             </select>
-            <input type="number" value="${s.duration}" min="4" max="8" style="width:52px"
+            <input type="number" value="${escapeAttr(String(s.duration))}" min="4" max="8" style="width:52px"
                 onchange="updateShot(${s.id}, 'duration', this.value)">
-            <button class="shot-del" onclick="removeShot(${s.id})">×</button>
+            <button class="shot-del" data-action="remove-shot" data-id="${s.id}">×</button>
         </div>
     `).join('');
     updateStoryCost();
@@ -2361,7 +2500,7 @@ async function generateStoryboard() {
 
     try {
         const r = await fetch(`${API}/api/batch`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders() },
             body: JSON.stringify({
                 shots: validShots.map(s => ({
                     prompt: s.prompt, model: s.model, duration: s.duration, ratio: s.ratio
@@ -2375,40 +2514,44 @@ async function generateStoryboard() {
 
         const batchId = d.batch_id;
         let batchDone = false;
+        let batchPollCount = 0;
+        const MAX_BATCH_POLL = 600; // 30 分钟超时（600 * 3s）
 
         while (!batchDone) {
             await new Promise(res => setTimeout(res, 3000));
-            const sr = await fetch(`${API}/api/batch/${batchId}`);
-            const sd = await sr.json();
+            batchPollCount++;
+            if (batchPollCount > MAX_BATCH_POLL) {
+                throw new Error('Batch generation timed out (30 min)');
+            }
+            const sd = await apiFetch(`${API}/api/batch/${batchId}`);
             const pct = Math.round((sd.completed_shots || 0) / validShots.length * 90) + 5;
             progBar.style.width = pct + '%';
             progText.textContent = sd.message || `${sd.completed_shots}/${validShots.length} shots done`;
-            if (sd.status === 'completed') batchDone = true;
+            if (sd.status === 'completed' || sd.status === 'error') batchDone = true;
         }
 
         progBar.style.width = '100%';
         prog.classList.remove('show');
 
         // Show results
-        const sr = await fetch(`${API}/api/batch/${batchId}`);
-        const sd = await sr.json();
+        const sd = await apiFetch(`${API}/api/batch/${batchId}`);
         const resultDiv = document.getElementById('story-result');
         resultDiv.style.display = 'block';
 
-        let html = `<div class="section-title">Results: ${sd.completed_shots}/${validShots.length} completed</div>`;
+        let html = `<div class="section-title">Results: ${escapeHtml(String(sd.completed_shots))}/${escapeHtml(String(validShots.length))} completed</div>`;
         if (sd.output_path) {
-            html += `<div style="margin-bottom:10px"><a class="dl-btn" href="/api/download/${batchId}_final" download>⬇ Download Combined Video</a></div>`;
+            html += `<div style="margin-bottom:10px"><a class="dl-btn" href="/api/download/${encodeURIComponent(batchId)}_final" download>⬇ Download Combined Video</a></div>`;
         }
         html += (sd.shots || []).map((s, i) => {
             const badge = s.status === 'completed'
                 ? `<span class="badge badge-ok">✓ Done</span>`
-                : `<span class="badge badge-err">✗ Error: ${s.error || 'failed'}</span>`;
+                : `<span class="badge badge-err">✗ Error: ${escapeHtml(s.error || 'failed')}</span>`;
             const dl = s.status === 'completed'
-                ? ` <a class="dl-btn" href="/api/download/${batchId}_shot_${String(i).padStart(3,'0')}" download style="padding:5px 10px;font-size:11px">⬇ DL</a>`
+                ? ` <a class="dl-btn" href="/api/download/${encodeURIComponent(batchId)}_shot_${String(i).padStart(3,'0')}" download style="padding:5px 10px;font-size:11px">⬇ DL</a>`
                 : '';
             return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px">
                 <span style="color:var(--text3);font-weight:600;min-width:24px">${i+1}</span>
-                <span style="flex:1;color:var(--text2)">${s.prompt.substring(0,60)}${s.prompt.length>60?'…':''}</span>
+                <span style="flex:1;color:var(--text2)">${escapeHtml((s.prompt||'').substring(0,60))}${(s.prompt||'').length>60?'…':''}</span>
                 ${badge}${dl}
             </div>`;
         }).join('');
@@ -2425,12 +2568,10 @@ async function generateStoryboard() {
 // ─────────────────────────────────────────────────────────────────────────────
 async function loadDashboard() {
     try {
-        const [sr, hr] = await Promise.all([
-            fetch(`${API}/api/history/stats`),
-            fetch(`${API}/api/history?limit=50`)
+        const [stats, hist] = await Promise.all([
+            apiFetch(`${API}/api/history/stats`),
+            apiFetch(`${API}/api/history?limit=50`)
         ]);
-        const stats = await sr.json();
-        const hist = await hr.json();
 
         document.getElementById('stat-total-cost').textContent = '$' + (stats.total_cost || 0).toFixed(2);
         document.getElementById('stat-total-gen').textContent = stats.total_generations || 0;
@@ -2446,27 +2587,35 @@ async function loadDashboard() {
                 : h.status === 'error'
                 ? '<span class="badge badge-err">✗ Error</span>'
                 : '<span class="badge badge-pend">⏳</span>';
-            // 缩略图：如果有 thumbnail_url 则显示
-            const thumb = h.thumbnail_url
-                ? `<img src="${API}${h.thumbnail_url}" style="width:48px;height:32px;object-fit:cover;border-radius:4px;cursor:pointer" onclick="window.open('${API}${h.thumbnail_url}','_blank')" onerror="this.style.display='none'">`
+            // 缩略图：如果有 thumbnail_url 则显示（URL 已转义防 XSS）
+            const thumbUrl = h.thumbnail_url ? `${API}${h.thumbnail_url}` : '';
+            const thumb = thumbUrl
+                ? `<img src="${escapeAttr(thumbUrl)}" style="width:48px;height:32px;object-fit:cover;border-radius:4px;cursor:pointer" data-action="open-thumb" data-url="${escapeAttr(thumbUrl)}" onerror="this.style.display='none'">`
                 : '<span style="color:var(--text3)">—</span>';
             return `<tr>
                 <td>${thumb}</td>
-                <td>${dt}</td>
-                <td>${prompt}${(h.prompt||'').length>36?'…':''}</td>
-                <td>${h.model || '-'}</td>
-                <td>${cost}</td>
+                <td>${escapeHtml(dt)}</td>
+                <td>${escapeHtml(prompt)}${(h.prompt||'').length>36?'…':''}</td>
+                <td>${escapeHtml(h.model || '-')}</td>
+                <td>${escapeHtml(cost)}</td>
                 <td>${badge}</td>
             </tr>`;
         }).join('');
         document.getElementById('history-body').innerHTML = rows || '<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:16px">No history yet</td></tr>';
-    } catch (e) { console.error(e); }
+    } catch (e) {
+        console.error('loadDashboard error:', e);
+        document.getElementById('history-body').innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--error);padding:16px">Failed to load: ${escapeHtml(e.message)}</td></tr>`;
+    }
 }
 
 async function clearHistory() {
     if (!confirm('Clear all generation history?')) return;
-    await fetch(`${API}/api/history/clear`, { method: 'POST' });
-    loadDashboard();
+    try {
+        await apiFetch(`${API}/api/history/clear`, { method: 'POST' });
+        await loadDashboard();
+    } catch (e) {
+        alert('Failed to clear history: ' + e.message);
+    }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

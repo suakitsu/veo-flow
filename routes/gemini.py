@@ -15,6 +15,7 @@ from config import (
 from generators.client import get_client
 from services.retry import call_with_retry
 from services.logger import get_logger
+from services.error_handler import safe_error_response
 
 log = get_logger(__name__)
 
@@ -61,9 +62,12 @@ def analyze_image():
         if 'image' not in files or not files['image'].filename:
             return jsonify({'error': 'Please upload an image'}), 400
 
-        image_file = files['image']
-        tmp_path = UPLOAD_FOLDER / f"analyze_{datetime.now().timestamp()}{Path(image_file.filename).suffix}"
-        image_file.save(tmp_path)
+        # 使用安全工具保存（校验类型+大小+防路径穿越）
+        from services.file_security import save_upload_safely
+        saved_path, err = save_upload_safely(files['image'], prefix='analyze_')
+        if saved_path is None:
+            return jsonify({'error': f'Invalid image upload: {err}'}), 400
+        tmp_path = saved_path
 
         try:
             client = get_client()
@@ -119,7 +123,7 @@ Return ONLY the JSON, no markdown formatting."""
     except json.JSONDecodeError as e:
         return jsonify({'error': f'Failed to parse Gemini response: {e}', 'raw': result_text}), 500
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return safe_error_response(e, 500, 'Image analysis failed')
 
 
 @bp.route('/api/chat', methods=['POST'])
@@ -158,7 +162,7 @@ If the user asks in Chinese, respond in Chinese but keep generated prompts in En
         return jsonify({'success': True, 'reply': response.text})
 
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return safe_error_response(e, 500, 'Chat failed')
 
 
 @bp.route('/api/refine-prompt', methods=['POST'])
@@ -204,4 +208,4 @@ Return ONLY the JSON, no markdown."""
     except json.JSONDecodeError:
         return jsonify({'error': 'Failed to parse response', 'raw': result_text}), 500
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return safe_error_response(e, 500, 'Prompt refinement failed')

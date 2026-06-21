@@ -11,10 +11,32 @@ env/
 logs/
 uploads/
 outputs/
+
+# 凭证与配置文件（绝不烘焙进镜像）
+.env
+.env.local
+config.json
+vertex.json
 tasks.json
 history.json
 *.operation.json
 tts_debug.log
+
+# 示例文件（避免误以为真凭证）
+*.example.json
+config.example.json
+vertex.example.json
+
+# Windows 脚本
+start.bat
+
+# 文档与测试（镜像不需要）
 *.md
 docs/
 tests/
+
+# 临时文件
+*.tmp
+*.bak
+*.swp
+.DS_Store

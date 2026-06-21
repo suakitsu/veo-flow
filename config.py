@@ -117,16 +117,24 @@ POLL_INTERVALS = [3, 10, 30, 60, 90]  # 指数退避间隔（秒）
 SEGMENT_DURATION = 8          # 长视频每段时长（秒）
 
 # 代理配置（运行时可变）
+# 默认不启用代理（避免硬编码不存在的代理地址导致请求失败）
+# 部署到中国大陆需通过 .env 或环境变量显式设置 HTTP_PROXY/HTTPS_PROXY
 proxy_config = {
-    'enabled': True,
-    'address': os.getenv('HTTP_PROXY', 'http://127.0.0.1:7897'),
+    'enabled': False,
+    'address': os.getenv('HTTP_PROXY', ''),
 }
 
-# API 配置（用于 API Key 模式，如 xiaomimimo）
+# API 配置（用于 API Key 模式，如 xiaomimimo 中转服务）
 api_config = {
     'api_key': '',
-    'base_url': 'https://api.xiaomimimo.com-NO-DEFAULT', # 实际上默认留空由 SDK 处理
+    'base_url': '',  # 留空由 SDK 自行处理默认端点
 }
+
+# 文件上传安全配置
+MAX_UPLOAD_SIZE = 50 * 1024 * 1024  # 50 MB
+ALLOWED_IMAGE_EXTS = {'.png', '.jpg', '.jpeg', '.webp'}
+ALLOWED_VIDEO_EXTS = {'.mp4', '.mov', '.webm'}
+ALLOWED_UPLOAD_EXTS = ALLOWED_IMAGE_EXTS | ALLOWED_VIDEO_EXTS
 
 
 def init_env():
@@ -142,28 +150,38 @@ def init_env():
                         continue
                     key, _, value = line.partition('=')
                     key, value = key.strip(), value.strip()
+                    # 移除可能的 export 前缀
+                    if key.startswith('export '):
+                        key = key[7:].strip()
+                    # 移除值两端的引号
+                    if len(value) >= 2 and value[0] == value[-1] and value[0] in ('"', "'"):
+                        value = value[1:-1]
                     # 不覆盖已存在的环境变量
                     if key and key not in os.environ:
                         os.environ[key] = value
-        except Exception:
-            pass
+        except Exception as e:
+            # 记录 .env 解析错误，便于排查
+            import sys
+            print(f"[config] Warning: failed to parse .env: {e}", file=sys.stderr)
 
-    # 设置代理（必须在导入 google.genai 之前）
-    os.environ['HTTP_PROXY'] = os.getenv('HTTP_PROXY', 'http://127.0.0.1:7897')
-    os.environ['HTTPS_PROXY'] = os.getenv('HTTPS_PROXY', 'http://127.0.0.1:7897')
+    # 设置代理（仅在显式配置时启用，避免硬编码不存在的代理）
+    if os.getenv('HTTP_PROXY'):
+        os.environ.setdefault('HTTPS_PROXY', os.getenv('HTTP_PROXY'))
+        proxy_config['enabled'] = True
+        proxy_config['address'] = os.getenv('HTTP_PROXY')
 
     # 从 config.json 读取凭证
     if CONFIG_FILE.exists():
         with open(CONFIG_FILE, 'r') as f:
             cfg = json.load(f)
             os.environ['GCP_PROJECT_ID'] = cfg.get('project_id', '')
-            
+
             # 模式 A：服务号 JSON 文件
             cred_path = cfg.get('credentials', '')
             if cred_path and not os.path.isabs(cred_path):
                 cred_path = str(BASE_DIR / cred_path)
             os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = cred_path
-            
+
             # 模式 B：API Key 模式 (如 xiaomimimo)
             api_config['api_key'] = cfg.get('api_key', '')
             api_config['base_url'] = cfg.get('api_base_url', '')

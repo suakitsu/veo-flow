@@ -67,12 +67,11 @@ Cost estimate shown before every generation. Confirm to proceed.
 pip install -r requirements.txt
 
 # 2. Configure credentials
-#    A. API Key Mode (Recommended for xiaomimimo/Third-party):
+#    A. API Key Mode (for xiaomimimo/Third-party):
 #       Edit config.json: set "api_key", "api_base_url", and "project_id".
-#    B. Vertex AI Mode (Standard):
+#    B. Vertex AI Mode (Standard, Recommended):
 #       Place your GCP service account key as vertex.json and set "project_id" in config.json.
 
-```bash
 # 3. Launch
 python app.py
 # Or double-click start.bat (Windows)
@@ -80,32 +79,84 @@ python app.py
 # 4. Open http://localhost:5000
 ```
 
+### Docker Deployment (Production)
+
+```bash
+# 1. Prepare credentials
+cp config.example.json config.json   # Edit to fill project_id
+cp vertex.example.json vertex.json   # Edit to fill real service account key
+cp .env.example .env                 # Edit as needed
+
+# 2. Build and start
+docker compose up -d --build
+
+# 3. View logs
+docker compose logs -f
+```
+
+Production uses gunicorn + gevent (supports SSE concurrency), runs as non-root user, port bound to 127.0.0.1 only (reverse proxy required).
+
+### API Authentication
+
+Set the `API_KEY` environment variable to require authentication for all write endpoints:
+
+```bash
+# Header-based (recommended)
+curl -H "X-API-Key: your-secret-key" http://localhost:5000/api/generate
+# Or
+curl -H "Authorization: Bearer your-secret-key" http://localhost:5000/api/generate
+```
+
+Read-only endpoints (models, docs, task status, history) do not require authentication.
+
 ## 🏗️ Architecture
 
 ```
-googleVideo/
+veo-flow/
 ├── app.py                 # Entry point
 ├── config.py              # Configuration
 ├── start.bat              # Windows launcher
+├── Dockerfile             # Docker image (gunicorn + gevent)
+├── docker-compose.yml     # Docker Compose
 │
 ├── generators/            # Core generation logic
-│   ├── veo.py            # Veo video generator
+│   ├── veo.py            # Veo video generator (short/long/extend/interpolate)
 │   ├── imagen.py         # Imagen image generator
-│   └── client.py         # Unified GenAI client
+│   ├── nano_banana.py    # Nano Banana image generator
+│   └── client.py         # Unified GenAI client (Vertex AI / API Key dual mode)
 │
 ├── routes/                # Flask Blueprints
 │   ├── generate.py       # Short/Long/Image/Batch APIs
 │   ├── narration.py      # TTS & Narration workflow
 │   ├── gemini.py         # AI assistant endpoints
-│   ├── tasks.py          # Task status & download
-│   └── proxy.py          # Proxy configuration
+│   ├── nano_banana.py    # Nano Banana routes
+│   ├── tasks.py          # Task status, SSE stream, download
+│   ├── proxy.py          # Proxy configuration
+│   └── docs.py           # OpenAPI docs
 │
 ├── services/              # Business logic
-│   ├── task_manager.py   # Task state, user locks
-│   └── history_manager.py# Thread-safe history & stats
+│   ├── task_manager.py   # Task state, user locks, TTL cleanup
+│   ├── history_manager.py# Thread-safe history & stats
+│   ├── auth.py           # API Key auth middleware
+│   ├── retry.py          # Exponential backoff retry
+│   ├── request_utils.py  # Real IP extraction (XFF spoofing protection)
+│   ├── file_security.py  # Upload security (path traversal, type validation)
+│   ├── error_handler.py  # Unified error responses (no internal leak)
+│   ├── cleanup.py        # Expired file cleanup
+│   └── logger.py         # Structured logging
 │
 ├── templates/
 │   └── index.html        # Web UI
+│
+├── tests/                # Test suite
+│   ├── test_app.py       # App entry tests
+│   ├── test_auth.py      # Auth middleware tests
+│   ├── test_config.py    # Config tests
+│   ├── test_task_manager.py # Task manager tests
+│   └── test_history_manager.py # History manager tests
+│
+├── docs/
+│   └── openapi.yaml      # OpenAPI spec
 │
 ├── uploads/               # Uploaded files
 └── outputs/               # Generated results
@@ -113,15 +164,31 @@ googleVideo/
 
 ## 📡 API Reference
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/generate` | Generate video/image |
-| `POST` | `/api/batch` | Batch generation (Storyboard) |
-| `POST` | `/api/narration` | TTS Video synthesis |
-| `GET`  | `/api/history` | Get generation logs |
-| `GET`  | `/api/templates` | List prompt templates |
-| `GET`  | `/api/task/<id>` | Get task status |
-| `POST` | `/api/analyze-image`| Analyze image with Gemini |
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| `POST` | `/api/generate` | Generate video/image | Required |
+| `POST` | `/api/extend` | Extend video | Required |
+| `POST` | `/api/interpolate` | First-last frame interpolation | Required |
+| `POST` | `/api/batch` | Batch generation (Storyboard) | Required |
+| `POST` | `/api/upload` | Upload file | Required |
+| `POST` | `/api/narration` | TTS Video synthesis | Required |
+| `POST` | `/api/narration/auto` | Auto narration workflow | Required |
+| `POST` | `/api/narration/ai-image` | AI image for narration | Required |
+| `POST` | `/api/analyze-image` | Analyze image with Gemini | Required |
+| `POST` | `/api/chat` | Chat with Gemini | Required |
+| `POST` | `/api/refine-prompt` | Refine prompt with Gemini | Required |
+| `POST` | `/api/nano-banana/generate` | Nano Banana generation | Required |
+| `POST` | `/api/history/clear` | Clear history | Required |
+| `POST` | `/api/proxy` | Update proxy config | Required |
+| `GET`  | `/api/models` | List available models | Public |
+| `GET`  | `/api/history` | Get generation logs | Public |
+| `GET`  | `/api/history/stats` | Get statistics | Public |
+| `GET`  | `/api/templates` | List prompt templates | Public |
+| `GET`  | `/api/tasks` | List all tasks | Public |
+| `GET`  | `/api/task/<id>` | Get task status | Public |
+| `GET`  | `/api/task/<id>/stream` | SSE task stream | Public |
+| `GET`  | `/api/download/<id>` | Download file | Public |
+| `GET`  | `/api/uploads/<filename>` | Serve uploaded file | Public |
 
 ## ⚙️ Configuration
 

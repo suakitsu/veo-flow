@@ -10,6 +10,7 @@ from config import UPLOAD_FOLDER, OUTPUT_FOLDER, GEMINI_IMAGE_MODELS
 from generators.nano_banana import NanoBananaGenerator
 from services import task_manager as tm
 from services.request_utils import get_client_ip
+from services.file_security import save_upload_safely
 
 bp = Blueprint('nano_banana', __name__)
 
@@ -49,13 +50,13 @@ def generate_image():
 
     model = data.get('model', 'nano-banana-2')
 
-    # 处理参考图
+    # 处理参考图（使用安全工具防路径穿越+类型校验）
     ref_image_path = None
-    if 'image' in files:
-        ext = Path(files['image'].filename).suffix or '.png'
-        ref_name = f"nb_ref_{uuid.uuid4().hex[:8]}{ext}"
-        ref_image_path = str(UPLOAD_FOLDER / ref_name)
-        files['image'].save(ref_image_path)
+    if 'image' in files and files['image'].filename:
+        saved_path, err = save_upload_safely(files['image'], prefix='nb_ref_')
+        if saved_path is None:
+            return jsonify({'error': f'Invalid image upload: {err}'}), 400
+        ref_image_path = str(saved_path)
 
     # 处理对话历史
     conversation_history = None

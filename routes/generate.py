@@ -14,6 +14,13 @@ from generators.veo import VeoGenerator
 from generators.imagen import ImagenGenerator
 from services import task_manager as tm
 from services.request_utils import get_client_ip
+from services.file_security import (
+    save_upload_safely, safe_resolve_upload, validate_upload_file,
+)
+from services.logger import get_logger
+from services.error_handler import safe_error_response
+
+log = get_logger(__name__)
 
 bp = Blueprint('generate', __name__)
 
@@ -84,11 +91,11 @@ def generate_video():
         image_files = files.getlist('image') if hasattr(files, 'getlist') else [files.get('image')] if 'image' in files else []
         for img_file in image_files:
             if img_file and img_file.filename:
-                image_ext = Path(img_file.filename).suffix
-                tmp_id = str(uuid.uuid4())
-                img_path = UPLOAD_FOLDER / f"{tmp_id}_ref{image_ext}"
-                img_file.save(img_path)
-                image_paths.append(str(img_path))
+                # 使用安全工具保存（校验类型+大小+防路径穿越）
+                saved_path, err = save_upload_safely(img_file, prefix='ref_')
+                if saved_path is None:
+                    return jsonify({'error': f'Invalid upload: {err}'}), 400
+                image_paths.append(str(saved_path))
 
         # 兼容：单图模式取第一张
         image_path = image_paths[0] if image_paths else None
@@ -152,7 +159,7 @@ def generate_video():
         })
 
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return safe_error_response(e, 500, 'Video generation failed')
 
 
 @bp.route('/api/extend', methods=['POST'])
@@ -186,17 +193,15 @@ def extend_video():
         image_path = None
 
         if 'video' in files and files['video'].filename:
-            vf = files['video']
-            ext = Path(vf.filename).suffix
-            tmp = str(uuid.uuid4())
-            video_path = UPLOAD_FOLDER / f"{tmp}_source_video{ext}"
-            vf.save(video_path)
+            saved_path, err = save_upload_safely(files['video'], prefix='src_video_')
+            if saved_path is None:
+                return jsonify({'error': f'Invalid video upload: {err}'}), 400
+            video_path = saved_path
         elif 'last_frame' in files and files['last_frame'].filename:
-            imgf = files['last_frame']
-            ext = Path(imgf.filename).suffix
-            tmp = str(uuid.uuid4())
-            image_path = UPLOAD_FOLDER / f"{tmp}_source_frame{ext}"
-            imgf.save(image_path)
+            saved_path, err = save_upload_safely(files['last_frame'], prefix='src_frame_')
+            if saved_path is None:
+                return jsonify({'error': f'Invalid image upload: {err}'}), 400
+            image_path = saved_path
         else:
             return jsonify({'error': 'Source video or last frame is required'}), 400
 
@@ -223,7 +228,7 @@ def extend_video():
         })
 
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return safe_error_response(e, 500, 'Video extension failed')
 
 
 # ------------------------------------------------------------------
@@ -270,14 +275,15 @@ def interpolate_frames():
     if locked:
         return jsonify({'error': 'Another task is running. Please wait.'}), 429
 
-    # 保存首尾帧
-    tmp_id = str(uuid.uuid4())
-    first_ext = Path(first_frame.filename).suffix or '.png'
-    last_ext = Path(last_frame.filename).suffix or '.png'
-    first_path = UPLOAD_FOLDER / f"{tmp_id}_first{first_ext}"
-    last_path = UPLOAD_FOLDER / f"{tmp_id}_last{last_ext}"
-    first_frame.save(first_path)
-    last_frame.save(last_path)
+    # 保存首尾帧（使用安全工具防路径穿越+类型校验）
+    first_saved, first_err = save_upload_safely(first_frame, prefix='first_')
+    if first_saved is None:
+        return jsonify({'error': f'Invalid first frame: {first_err}'}), 400
+    last_saved, last_err = save_upload_safely(last_frame, prefix='last_')
+    if last_saved is None:
+        return jsonify({'error': f'Invalid last frame: {last_err}'}), 400
+    first_path = first_saved
+    last_path = last_saved
 
     task = tm.create_task('interpolate', prompt, model, ratio, '')
     output_path = OUTPUT_FOLDER / f"{task['id']}_interp.mp4"
@@ -448,11 +454,9 @@ def upload_file():
     files = request.files
     if 'image' not in files or not files['image'].filename:
         return jsonify({'error': 'No file uploaded'}), 400
-    f = files['image']
-    ext = Path(f.filename).suffix
-    filename = f"upload_{uuid.uuid4().hex[:8]}{ext}"
-    save_path = UPLOAD_FOLDER / filename
-    f.save(save_path)
+    saved_path, filename = save_upload_safely(files['image'], prefix='upload_')
+    if saved_path is None:
+        return jsonify({'error': filename}), 400
     return jsonify({
         'filename': filename,
         'url': f'/api/uploads/{filename}',
@@ -461,8 +465,8 @@ def upload_file():
 
 @bp.route('/api/uploads/<filename>')
 def serve_upload(filename):
-    """提供已上传文件的静态访问"""
-    path = UPLOAD_FOLDER / filename
-    if not path.exists():
+    """提供已上传文件的静态访问（防路径穿越）"""
+    safe_path = safe_resolve_upload(filename)
+    if safe_path is None:
         return jsonify({'error': 'File not found'}), 404
-    return send_file(str(path))
+    return send_file(str(safe_path))
